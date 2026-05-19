@@ -39,34 +39,36 @@ export default function App() {
     <BrowserRouter>
 
       <nav className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
 
+          {/* Logo */}
           <Link
             to="/"
-            className="text-2xl font-bold text-indigo-600"
+            className="text-center text-xl font-bold text-indigo-600 sm:text-2xl"
           >
             FinanceApp
           </Link>
 
-          <div className="flex items-center gap-6">
+          {/* Menu */}
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6">
 
             <Link
               to="/home"
-              className="font-medium text-slate-700 transition hover:text-indigo-600"
+              className="text-sm font-medium text-slate-700 transition hover:text-indigo-600 sm:text-base"
             >
               Home
             </Link>
 
             <Link
               to="/adddata"
-              className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white transition hover:bg-indigo-700"
+              className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 sm:px-4 sm:text-base"
             >
               Add Data
             </Link>
 
             <Link
               to="/login"
-              className="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+              className="max-w-[140px] truncate rounded-full bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-200 sm:max-w-none sm:px-4 sm:text-sm"
             >
               {user ? user.email : "Login"}
             </Link>
@@ -86,7 +88,7 @@ export default function App() {
           }
         />
 
-<Route
+        <Route
           path="/home"
           element={
             <ProtectedRoute user={user}>
