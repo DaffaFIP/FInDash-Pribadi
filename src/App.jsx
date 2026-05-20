@@ -61,7 +61,7 @@ export default function App() {
 
             <Link
               to="/adddata"
-              className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 sm:px-4 sm:text-base"
+              className="text-sm font-medium text-slate-700 transition hover:text-indigo-600 sm:text-base"
             >
               Add Data
             </Link>
