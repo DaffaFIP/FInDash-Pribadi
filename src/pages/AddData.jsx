@@ -104,7 +104,9 @@ export default function AddTransaction() {
               <option value="">-- Pilih Category --</option>
               <option value="Jajan">Jajan</option>
               <option value="Transport">Transport</option>
-              <option value="Hobi">Hobi</option>
+              <option value="Gadget">Gadget</option>
+              <option value="Olahraga">Olahraga</option>
+              <option value="Buku">Buku</option>
               <option value="Internet">Internet</option>
               <option value="Lainnya">Lainnya</option>
             </select>
