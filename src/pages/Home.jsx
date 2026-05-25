@@ -21,13 +21,12 @@ export default function App({ user }) {
         </div>
 
         <div>
-          <Tabel user={user} />
-        </div>
-
-        <div>
           <Brownie user={user} />
         </div>
 
+        <div>
+          <Tabel user={user} />
+        </div>
 
       </div>
     </div>
