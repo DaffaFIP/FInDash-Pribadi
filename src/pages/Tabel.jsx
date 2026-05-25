@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import EditModal from "./EditModal";
 import DeleteModal from "./DeleteModal";
+import { Trash2, SquarePen } from "lucide-react";
 import {
   collection,
   getDocs,
@@ -226,46 +227,35 @@ export default function App({ user }) {
                   </td>
 
                   {user && (
-                    <td className="p-3">
+                    <td className="p-3 space-x-2">
 
-                      <select
-                        defaultValue=""
-                        onChange={(e) => {
+                      <button
+                        onClick={() => {
+                          setEditData({
+                            ...item,
+                            Date: item.Date
+                              ?.toISOString()
+                              .split("T")[0],
+                          });
 
-                          if (e.target.value === "edit") {
-                            setEditData({
-                              ...item,
-                              Date: item.Date
-                                ?.toISOString()
-                                .split("T")[0],
-                            });
-
-                            setIsEditOpen(true);
-                          }
-
-                          if (e.target.value === "delete") {
-                            setDeleteId(item.id);
-                            setIsDeleteOpen(true);
-                          }
-
-                          // reset select
-                          e.target.value = "";
+                          setIsEditOpen(true);
                         }}
-                        className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        className="rounded-xl bg-blue-500/10 p-2 text-blue-500 transition hover:bg-blue-500 hover:text-white"
                       >
-                        <option value="" disabled>
-                          Pilih
-                        </option>
+                      <SquarePen size={18} />
+                      </button>
 
-                        <option value="edit">
-                          Edit
-                        </option>
 
-                        <option value="delete">
-                          Hapus
-                        </option>
 
-                      </select>
+                      <button
+                        onClick={() => {
+                          setDeleteId(item.id);
+                          setIsDeleteOpen(true);
+                        }}
+                        className="rounded-xl bg-red-500/10 p-2 text-red-500 transition hover:bg-red-500 hover:text-white"
+                      >
+                        <Trash2 size={18} />
+                      </button>
 
                     </td>
                   )}

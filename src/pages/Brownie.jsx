@@ -70,10 +70,10 @@ export default function App() {
   ) => {
 
     // PUBLIC DEMO
-    const now = new Date("2026-05-19");
+    // const now = new Date("2026-05-19");
 
     // REAL TIME
-    // const now = new Date();
+    const now = new Date();
 
     if (filter === "7days") {
 
@@ -216,7 +216,7 @@ export default function App() {
     Transport: "bg-pink-500",
     Internet: "bg-emerald-500",
     Gadget: "bg-cyan-500",
-    Makanan: "bg-amber-500",
+    // Makanan: "bg-amber-500",
     Olahraga: "bg-orange-500",
     Hiburan: "bg-violet-500",
 
