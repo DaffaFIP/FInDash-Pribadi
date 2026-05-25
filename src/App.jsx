@@ -199,8 +199,6 @@ className={`
       <div className="border-t py-4 text-center text-sm text-slate-500">
         <a
           href="https://daffafip.my.id"
-          target="_blank"
-          rel="noopener noreferrer"
         >
           © {new Date().getFullYear()} Daffa Faadihilah
         </a>
