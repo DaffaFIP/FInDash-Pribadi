@@ -200,28 +200,27 @@ export default function App() {
   }, [filteredBrownieExpenses]);
 
   // // COLORS
-  // const brownieColors = [
-  //   "bg-indigo-500",
-  //   "bg-pink-500",
-  //   "bg-emerald-500",
-  //   "bg-amber-500",
-  //   "bg-cyan-500",
-  //   "bg-orange-500",
-  //   "bg-violet-500",
-  // ];
+  // const categoryColors = {
+  //   Jajan: "bg-indigo-500",
+  //   Transport: "bg-pink-500",
+  //   Internet: "bg-emerald-500",
+  //   Gadget: "bg-cyan-500",
+  //   Buku: "bg-amber-500",
+  //   Olahraga: "bg-orange-500",
+  //   Hiburan: "bg-violet-500",
+  //   Lainnya: "bg-slate-500",
+  // };
 
   // warna per kategori (bisa disesuaikan dengan kategori yang ada di data)
   const categoryColors = {
-    Jajan: "bg-indigo-500",
-    Transport: "bg-pink-500",
-    Internet: "bg-emerald-500",
-    Gadget: "bg-cyan-500",
-    // Makanan: "bg-amber-500",
-    Olahraga: "bg-orange-500",
-    Hiburan: "bg-violet-500",
-
-    // default fallback
-    Lainnya: "bg-slate-500",
+    Jajan: "bg-[#4F46E5]",
+    Transport: "bg-[#EC4899]",
+    Internet: "bg-[#10B981]",
+    Gadget: "bg-[#06B6D4]",
+    Buku: "bg-[#F59E0B]",
+    Olahraga: "bg-[#F97316]",
+    Hiburan: "bg-[#8B5CF6]",
+    Lainnya: "bg-[#64748B]",
   };
 
   // // BROWNIE SQUARES
@@ -343,7 +342,9 @@ export default function App() {
           {/* GRID */}
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
 
-            <div className="grid grid-cols-10 gap-1 sm:gap-2">
+            <div
+              className=" grid grid-cols-10 gap-[2px] bg-white p-[2px] rounded-sm"
+            >
 
               {brownieSquares.map(
                 (square, i) => (
@@ -355,15 +356,10 @@ export default function App() {
                       ${square.label}
                       (${square.value}%)
                     `}
-
                     className={`
                       aspect-square
                       w-6 sm:w-8 md:w-10
                       rounded-md
-                      border border-black/10
-                      shadow-inner
-                      hover:scale-105
-                      transition-transform
                       ${square.color}
                     `}
                   />
