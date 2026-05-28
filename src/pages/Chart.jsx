@@ -54,39 +54,31 @@ export default function App({ user }) {
 
   // FILTER DATA
   const filteredExpenses = useMemo(() => {
+    const toDayStart = (date) => {
+      const day = new Date(date);
+      day.setHours(0, 0, 0, 0);
+      return day;
+    };
 
-    // untuk penggunaan pribadi tanggal berubah-ubah
-    const now = new Date();
+    const today = toDayStart(new Date());
 
+    const isWithinDayRange = (item, daysBack) => {
+      if (!item.Date) return false;
+      const itemDay = toDayStart(item.Date);
+      const rangeStart = new Date(today);
+      rangeStart.setDate(today.getDate() - daysBack);
+      return itemDay >= rangeStart && itemDay <= today;
+    };
 
     if (filter === "7days") {
-      const last7Days = new Date();
-
-      last7Days.setDate(
-        now.getDate() - 7
-      );
-
-      return expenses.filter(
-        (item) =>
-          new Date(item.Date) >= last7Days
-      );
+      return expenses.filter((item) => isWithinDayRange(item, 7));
     }
 
     if (filter === "30days") {
-      const last30Days = new Date();
-
-      last30Days.setDate(
-        now.getDate() - 30
-      );
-
-      return expenses.filter(
-        (item) =>
-          new Date(item.Date) >= last30Days
-      );
+      return expenses.filter((item) => isWithinDayRange(item, 30));
     }
 
     return expenses;
-
   }, [expenses, filter]);
 
 
@@ -124,6 +116,20 @@ export default function App({ user }) {
 
   }, [filteredExpenses]);
 
+  const totalFilteredExpense = useMemo(() => {
+    return filteredExpenses.reduce(
+      (sum, item) => sum + Number(item.amount || 0),
+      0
+    );
+  }, [filteredExpenses]);
+
+  const filterTotalLabel =
+    filter === "7days"
+      ? "Total 7 hari terakhir"
+      : filter === "30days"
+        ? "Total 30 hari terakhir"
+        : "Total semua data";
+
   // CURRENCY
   const currency = (value) => {
     return new Intl.NumberFormat("id-ID", {
@@ -145,9 +151,8 @@ export default function App({ user }) {
           Grafik Pengeluaran
         </h2>
 
-        {/* filter button */}
-        <div className="mb-4 flex gap-2">
-
+        {/* filter button + total */}
+        <div className="mb-4 flex flex-wrap items-center gap-4">
           <button
             onClick={() => setFilter("7days")}
             className={`rounded-lg px-4 py-2 text-sm font-medium ${filter === "7days"
@@ -178,6 +183,12 @@ export default function App({ user }) {
             Semua
           </button>
 
+          <div className="border-l border-slate-200 pl-4">
+            <p className="text-sm text-slate-500">{filterTotalLabel}</p>
+            <p className="text-lg font-semibold text-indigo-600">
+              {currency(totalFilteredExpense)}
+            </p>
+          </div>
         </div>
 
 

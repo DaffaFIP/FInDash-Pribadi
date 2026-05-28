@@ -75,34 +75,28 @@ export default function App() {
     // REAL TIME
     const now = new Date();
 
+    const toDayStart = (date) => {
+      const day = new Date(date);
+      day.setHours(0, 0, 0, 0);
+      return day;
+    };
+
+    const today = toDayStart(now);
+
+    const isWithinDayRange = (item, daysBack) => {
+      if (!item.Date) return false;
+      const itemDay = toDayStart(item.Date);
+      const rangeStart = new Date(today);
+      rangeStart.setDate(today.getDate() - daysBack);
+      return itemDay >= rangeStart && itemDay <= today;
+    };
+
     if (filter === "7days") {
-
-      const last7Days = new Date();
-
-      last7Days.setDate(
-        now.getDate() - 7
-      );
-
-      return data.filter(
-        (item) =>
-          new Date(item.Date) >=
-          last7Days
-      );
+      return data.filter((item) => isWithinDayRange(item, 7));
     }
 
     if (filter === "30days") {
-
-      const last30Days = new Date();
-
-      last30Days.setDate(
-        now.getDate() - 30
-      );
-
-      return data.filter(
-        (item) =>
-          new Date(item.Date) >=
-          last30Days
-      );
+      return data.filter((item) => isWithinDayRange(item, 30));
     }
 
     return data;
