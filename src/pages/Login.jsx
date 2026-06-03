@@ -53,45 +53,23 @@ export default function Login() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4"
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      }}
-    >
-      <div
-        className="w-full max-w-md bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 transform transition-all duration-300 hover:scale-[1.01]"
-        style={{
-          width: "300px",
-          margin: "100px auto",
-          padding: "20px",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-          borderRadius: "16px",
-          
-        }}
-      >
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Firebase Login
-            </span>
+          <h2 className="text-2xl font-bold text-slate-700">
+            <span className="text-indigo-600">Firebase Login</span>
           </h2>
         </div>
 
-        {/* INFO USER */}
         {user ? (
           <div className="animate-fade-in-up">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
                 {user.email?.charAt(0).toUpperCase()}
               </div>
               <div>
-                <p className="text-sm text-gray-500">Selamat datang kembali,</p>
-                <p className="text-base font-semibold text-gray-800">
+                <p className="text-sm text-slate-500">Selamat datang kembali,</p>
+                <p className="text-base font-semibold text-slate-700">
                   {user.email}
                 </p>
               </div>
@@ -100,7 +78,7 @@ export default function Login() {
             <button
               onClick={handleLogout}
               disabled={isLoading}
-              className="w-full py-3 px-4 text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg font-medium transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              className="w-full py-3 px-4 text-white bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center">
@@ -136,7 +114,7 @@ export default function Login() {
             <div className="mb-4">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-slate-700 mb-2"
               >
                 Email
               </label>
@@ -147,18 +125,14 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 outline-none"
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                }}
+                className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
               />
             </div>
 
             <div className="mb-4">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-slate-700 mb-2"
               >
                 Password
               </label>
@@ -169,18 +143,14 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 outline-none"
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                }}
+                className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-lg font-medium transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              className="w-full py-3 px-4 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center">
@@ -213,18 +183,13 @@ export default function Login() {
           </form>
         )}
 
-        {/* POPUP MESSAGE */}
         {message && (
           <div
-            className={`mt-4 p-4 rounded-lg text-center font-medium transition-all duration-300 transform animate-fade-in-up ${
+            className={`mt-4 p-3 rounded-lg text-center font-medium ${
               message.includes("berhasil")
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
             }`}
-            style={{
-              padding: "10px",
-              borderRadius: "8px",
-            }}
           >
             {message}
           </div>

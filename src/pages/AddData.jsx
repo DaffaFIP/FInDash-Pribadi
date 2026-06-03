@@ -9,7 +9,6 @@ import { db } from "../firebase";
 
 export default function AddTransaction() {
 
-
   const today = new Date()
     .toISOString()
     .split("T")[0];

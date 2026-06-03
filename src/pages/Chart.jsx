@@ -20,12 +20,16 @@ import { db } from "../firebase";
 export default function App({ user }) {
   const [expenses, setExpenses] = useState([]);
   const [filter, setFilter] = useState("30days");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
 
   // FETCH FIREBASE DATA
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const querySnapshot = await getDocs(
           collection(db, "transactions")
         );
@@ -45,6 +49,9 @@ export default function App({ user }) {
         setExpenses(data);
       } catch (error) {
         console.log(error);
+        setError("Gagal memuat data");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -143,7 +150,11 @@ export default function App({ user }) {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
 
-
+      {error && (
+        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+          {error}
+        </div>
+      )}
 
       {/* Header CHART */}
       <div className="rounded-2xl bg-white p-6 shadow">
@@ -151,7 +162,17 @@ export default function App({ user }) {
           Grafik Pengeluaran
         </h2>
 
-        {/* filter button + total */}
+        {loading ? (
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+            </div>
+            <div className="h-[350px] animate-pulse rounded-lg bg-slate-200" />
+          </div>
+        ) : (
+        <>
         <div className="mb-4 flex flex-wrap items-center gap-4">
           <button
             onClick={() => setFilter("7days")}
@@ -220,6 +241,8 @@ export default function App({ user }) {
             </LineChart>
           </ResponsiveContainer>
         </div>
+        </>
+        )}
       </div>
 
     </div>

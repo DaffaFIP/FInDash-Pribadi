@@ -16,6 +16,8 @@ import { db } from "../firebase";
 export default function App() {
 
   const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
 
 
@@ -31,7 +33,8 @@ export default function App() {
     const fetchTransactions = async () => {
 
       try {
-
+        setLoading(true);
+        setError(null);
         const querySnapshot =
           await getDocs(
             collection(db, "transactions")
@@ -56,6 +59,9 @@ export default function App() {
 
       } catch (error) {
         console.log(error);
+        setError("Gagal memuat data");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -261,7 +267,11 @@ export default function App() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
 
-
+      {error && (
+        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+          {error}
+        </div>
+      )}
 
       {/* ========================= */}
       {/* BROWNIE CHART */}
@@ -273,7 +283,17 @@ export default function App() {
           Distribusi Kategori
         </h2>
 
-        {/* FILTER */}
+        {loading ? (
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+            </div>
+            <div className="h-64 animate-pulse rounded-lg bg-slate-200" />
+          </div>
+        ) : (
+        <>
         <div className="mb-6 flex gap-2">
 
           <button
@@ -421,6 +441,8 @@ export default function App() {
 
           </div>
         </div>
+        </>
+      )}
       </div>
     </div>
   );

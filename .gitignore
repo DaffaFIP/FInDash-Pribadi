@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment
+.env
+*.local
+
+# Firebase Admin SDK key (jangan commit!)
+server/serviceAccountKey.json

@@ -16,6 +16,8 @@ import { db } from "../firebase";
 
 export default function App({ user }) {
   const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] =
     useState("all");
@@ -54,6 +56,8 @@ export default function App({ user }) {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const q = query(
           collection(db, "transactions"),
           orderBy("Date", "desc")
@@ -76,6 +80,9 @@ export default function App({ user }) {
         setExpenses(data);
       } catch (error) {
         console.log(error);
+        setError("Gagal memuat data");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -195,12 +202,27 @@ export default function App({ user }) {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
 
+      {error && (
+        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+          {error}
+        </div>
+      )}
 
       {/* TABLE */}
       <div className="rounded-2xl bg-white p-6 shadow">
         <h2 className="mb-4 text-xl font-semibold">
           Daftar Pengeluaran
         </h2>
+
+        {loading ? (
+          <div className="space-y-3">
+            <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
+            <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
+            <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
+            <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
+            <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
+          </div>
+        ) : (
 
         <div className="overflow-x-auto">
           <table className="w-full overflow-hidden rounded-xl">
@@ -413,6 +435,7 @@ export default function App({ user }) {
             />
           </table>
         </div>
+        )}
       </div>
 
     </div>

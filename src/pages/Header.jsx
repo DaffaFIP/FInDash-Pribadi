@@ -10,6 +10,8 @@ import { db } from "../firebase";
 
 export default function App() {
   const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [form, setForm] = useState({
     Date: "",
@@ -30,6 +32,8 @@ export default function App() {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const querySnapshot = await getDocs(
           collection(db, "transactions")
         );
@@ -49,6 +53,9 @@ export default function App() {
         setExpenses(data);
       } catch (error) {
         console.log(error);
+        setError("Gagal memuat data");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -100,6 +107,12 @@ export default function App() {
   return (
       <div className="mx-auto max-w-6xl space-y-6">
 
+        {error && (
+          <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
         {/* HEADER */}
         <div className="rounded-2xl bg-white p-6 shadow">
           <h1 className="text-3xl font-bold text-slate-800">
@@ -111,11 +124,15 @@ export default function App() {
           </p>
 
           <div className="mt-4">
-            <h2 className="text-xl font-semibold text-indigo-600">
-            Pengeluaran {monthName} :
-              {" "}
-              {currency(totalExpense)}
-            </h2>
+            {loading ? (
+              <div className="h-7 w-48 animate-pulse rounded bg-slate-200" />
+            ) : (
+              <h2 className="text-xl font-semibold text-indigo-600">
+              Pengeluaran {monthName} :
+                {" "}
+                {currency(totalExpense)}
+              </h2>
+            )}
           </div>
         </div>
 

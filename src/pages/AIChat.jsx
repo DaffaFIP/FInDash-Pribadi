@@ -1,11 +1,60 @@
 import { useEffect, useRef, useState } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function AIChat({ user }) {
 
+    const API_URL = import.meta.env.VITE_AI_API_URL || "http://localhost:3001";
+
     const [question, setQuestion] = useState("");
     const [messages, setMessages] = useState([]);
+    const [provider, setProvider] = useState("ollama");
+    const [providerLoading, setProviderLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const initialized = useRef(false);
+    const chatEndRef = useRef(null);
 
+    const scrollToBottom = () => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const fetchProvider = async () => {
+        try {
+            const token = await user.getIdToken();
+            const res = await fetch(API_URL + "/provider", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            setProvider(data.provider);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    const switchProvider = async (newProvider) => {
+        setProviderLoading(true);
+        try {
+            const token = await user.getIdToken();
+            const res = await fetch(API_URL + "/provider", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ provider: newProvider }),
+            });
+            const data = await res.json();
+            if (data.success) setProvider(data.provider);
+        } catch (err) {
+            console.log(err);
+        } finally {
+            setProviderLoading(false);
+        }
+    };
 
     useEffect(() => {
 
@@ -16,7 +65,7 @@ export default function AIChat({ user }) {
                 const token = await user.getIdToken();
 
                 await fetch(
-                    "http://localhost:3001/init-ai",
+                    API_URL + "/init-ai",
                     {
                         method: "POST",
 
@@ -42,19 +91,26 @@ export default function AIChat({ user }) {
         initialized.current = true;
 
         initAI();
+        fetchProvider();
 
     }, []);
 
     const askAI = async () => {
 
-        if (!question) return;
+        if (!question || loading) return;
+
+        const userQuestion = question;
+        setQuestion("");
+
+        setMessages((prev) => [...prev, { role: "user", content: userQuestion }]);
+        setLoading(true);
 
         try {
 
             const token = await user.getIdToken();
 
             const res = await fetch(
-                "http://localhost:3001/ask-ai",
+                API_URL + "/ask-ai",
                 {
                     method: "POST",
                     headers: {
@@ -62,61 +118,135 @@ export default function AIChat({ user }) {
                         Authorization: `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        question
+                        question: userQuestion
                     })
                 }
             );
 
 
             const data = await res.json();
-            setMessages((prevMessages) => [
-                ...prevMessages,
-                { question, answer: data.answer },
-            ]);
-            setQuestion("");
+            setMessages((prev) => [...prev, { role: "assistant", content: data.answer }]);
         } catch (err) {
 
             console.log(err);
+            setMessages((prev) => [...prev, { role: "assistant", content: "Maaf, terjadi kesalahan. Coba lagi nanti." }]);
 
+        } finally {
+            setLoading(false);
         }
     };
 
 
     return (
+        <>
+        <style>{`
+            .markdown h1, .markdown h2, .markdown h3 { font-weight: 600; margin-top: 0.5em; margin-bottom: 0.25em; }
+            .markdown h1 { font-size: 1.25rem; }
+            .markdown h2 { font-size: 1.1rem; }
+            .markdown h3 { font-size: 1rem; }
+            .markdown p { margin-bottom: 0.5em; }
+            .markdown p:last-child { margin-bottom: 0; }
+            .markdown ul, .markdown ol { padding-left: 1.25em; margin-bottom: 0.5em; }
+            .markdown li { margin-bottom: 0.25em; }
+            .markdown code { background: #f1f5f9; padding: 0.125em 0.375em; border-radius: 4px; font-size: 0.875em; }
+            .markdown pre { background: #1e293b; color: #e2e8f0; padding: 0.75em; border-radius: 8px; overflow-x: auto; margin-bottom: 0.5em; }
+            .markdown pre code { background: none; padding: 0; color: inherit; }
+            .markdown table { border-collapse: collapse; margin-bottom: 0.5em; width: 100%; }
+            .markdown th, .markdown td { border: 1px solid #cbd5e1; padding: 0.375em 0.5em; text-align: left; font-size: 0.875em; }
+            .markdown th { background: #f8fafc; font-weight: 600; }
+            .markdown blockquote { border-left: 3px solid #cbd5e1; padding-left: 0.75em; color: #64748b; margin-bottom: 0.5em; }
+            .markdown a { color: #4f46e5; text-decoration: underline; }
+            .markdown hr { margin: 0.75em 0; border-color: #e2e8f0; }
+            .markdown strong { font-weight: 600; }
+        `}</style>
 
-        <div className="mx-auto max-w-4xl p-6">
+        <div className="mx-auto flex h-full max-w-4xl flex-col p-6">
+            <div className="mb-4 flex items-center justify-between">
+                <h1 className="text-2xl font-bold text-slate-800">
+                    AI Financial Assistant
+                </h1>
 
-            <h1 className="mb-6 text-3xl font-bold text-slate-800">
-                AI Financial Assistant
-            </h1>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-500">AI:</span>
+                    <button
+                        onClick={() => switchProvider(provider === "ollama" ? "openrouter" : "ollama")}
+                        disabled={providerLoading}
+                        className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                            provider === "ollama"
+                                ? "bg-indigo-100 text-indigo-700"
+                                : "bg-purple-100 text-purple-700"
+                        } disabled:opacity-50`}
+                    >
+                        {providerLoading ? "..." : provider === "ollama" ? "Ollama" : "Open Router"}
+                    </button>
+                </div>
+            </div>
 
-            <div className="flex gap-3">
+            <div className="flex-1 space-y-4 overflow-y-auto rounded-2xl border bg-slate-50 p-4">
+                {messages.length === 0 ? (
+                    <div className="flex h-full items-center justify-center">
+                        <p className="text-center text-slate-400">
+                            Tanyakan sesuatu tentang keuangan Anda
+                        </p>
+                    </div>
+                ) : (
+                    messages.map((msg, index) => (
+                        <div
+                            key={index}
+                            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                        >
+                            <div
+                                className={`markdown max-w-[80%] rounded-2xl px-4 py-3 ${
+                                    msg.role === "user"
+                                        ? "bg-indigo-600 text-white"
+                                        : "border bg-white text-slate-700"
+                                }`}
+                            >
+                                {msg.role === "user" ? (
+                                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
+                                ) : (
+                                    <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
+                                )}
+                            </div>
+                        </div>
+                    ))
+                )}
 
+                {loading && (
+                    <div className="flex justify-start">
+                        <div className="max-w-[80%] rounded-2xl border bg-white px-4 py-3">
+                            <div className="flex items-center gap-1.5">
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: "0ms" }}></span>
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: "150ms" }}></span>
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: "300ms" }}></span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div ref={chatEndRef} />
+            </div>
+
+            <div className="mt-4 flex items-center gap-3">
                 <input
                     type="text"
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && askAI()}
                     placeholder="Tanya tentang keuangan anda..."
-                    className="flex-1 rounded-xl border p-4"
+                    className="flex-1 rounded-xl border p-4 outline-none transition focus:ring-2 focus:ring-indigo-500"
+                    disabled={loading}
                 />
 
                 <button
                     onClick={askAI}
-                    className="rounded-xl bg-indigo-600 px-6 py-4 text-white"
+                    disabled={loading || !question.trim()}
+                    className="rounded-xl bg-indigo-600 px-6 py-4 text-white transition hover:bg-indigo-700 disabled:opacity-50"
                 >
-                    Tanya
+                    Kirim
                 </button>
-
-            </div>
-
-            <div className="mt-6 space-y-4">
-                {messages.map((msg, index) => (
-                    <div key={index} className="rounded-2xl border bg-white p-6 shadow">
-                        <p className="font-semibold text-slate-800">Q: {msg.question}</p>
-                        <p className="text-slate-700">A: {msg.answer}</p>
-                    </div>
-                ))}
             </div>
         </div>
+        </>
     );
 }

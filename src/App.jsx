@@ -12,6 +12,7 @@ import AddData from './pages/AddData'
 import Login from './pages/Login'
 import AIChat from './pages/AIChat'
 import ProtectedRoute from "./pages/ProtectedRoute";
+import ErrorBoundary from "./pages/ErrorBoundary";
 
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -102,6 +103,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <div className="flex min-h-screen flex-col">
 
       <nav
         className={`
@@ -157,7 +159,9 @@ export default function App() {
         </div>
       </nav>
 
-      <Routes>
+      <main className="flex-1">
+        <ErrorBoundary>
+        <Routes>
 
         <Route
           path="/"
@@ -208,7 +212,9 @@ export default function App() {
         />
 
 
-      </Routes>
+        </Routes>
+        </ErrorBoundary>
+      </main>
 
       <div className="border-t py-4 text-center text-sm text-slate-500">
         <a
@@ -216,6 +222,8 @@ export default function App() {
         >
           © {new Date().getFullYear()} Daffa Faadihilah
         </a>
+      </div>
+
       </div>
 
     </BrowserRouter>
