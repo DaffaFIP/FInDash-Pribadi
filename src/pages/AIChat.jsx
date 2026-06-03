@@ -6,6 +6,9 @@ export default function AIChat({ user }) {
 
     const API_URL = import.meta.env.VITE_AI_API_URL || "http://localhost:3001";
 
+    const isLocal = typeof window !== "undefined"
+        && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
     const [question, setQuestion] = useState("");
     const [messages, setMessages] = useState([]);
     const [provider, setProvider] = useState("ollama");
@@ -58,6 +61,8 @@ export default function AIChat({ user }) {
 
     useEffect(() => {
 
+        if (!isLocal) return;
+
         const initAI = async () => {
 
             try {
@@ -97,7 +102,7 @@ export default function AIChat({ user }) {
 
     const askAI = async () => {
 
-        if (!question || loading) return;
+        if (!isLocal || !question || loading) return;
 
         const userQuestion = question;
         setQuestion("");
@@ -136,6 +141,26 @@ export default function AIChat({ user }) {
         }
     };
 
+
+    if (!isLocal) {
+        return (
+            <div className="mx-auto flex min-h-[60vh] max-w-4xl items-center justify-center p-6">
+                <div className="rounded-2xl border bg-white p-8 text-center shadow">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+                        <svg className="h-8 w-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <h2 className="mb-2 text-xl font-bold text-slate-800">
+                        AI Assistant Tidak Tersedia
+                    </h2>
+                    <p className="mx-auto max-w-sm text-sm text-slate-500">
+                        Fitur AI Assistant hanya dapat digunakan saat aplikasi dijalankan secara lokal dengan server AI yang berjalan.
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
