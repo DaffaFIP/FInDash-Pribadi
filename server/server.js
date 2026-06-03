@@ -263,7 +263,7 @@ app.post("/ask-ai", verifyToken, async (req, res) => {
                     stream: false,
                 },
                 {
-                    timeout: 60000,
+                    timeout: 600000,
                 }
             );
 

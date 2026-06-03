@@ -176,9 +176,17 @@ export default function AIChat({ user }) {
                         ],
                     }),
                 });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `HTTP ${res.status}`);
+                }
+
                 const data = await res.json();
                 answer = data.answer;
             }
+
+            if (!answer) throw new Error("Answer kosong");
 
             setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
 
@@ -186,7 +194,7 @@ export default function AIChat({ user }) {
             console.log(err);
             setMessages((prev) => [
                 ...prev,
-                { role: "assistant", content: "Maaf, terjadi kesalahan. Coba lagi nanti." },
+                { role: "assistant", content: "Maaf, terjadi kesalahan: " + err.message },
             ]);
         } finally {
             setLoading(false);
