@@ -1,18 +1,3 @@
-function parseBody(req) {
-    return new Promise((resolve, reject) => {
-        if (req.body) {
-            return resolve(typeof req.body === "string" ? JSON.parse(req.body) : req.body);
-        }
-        let raw = "";
-        req.on("data", (chunk) => raw += chunk);
-        req.on("end", () => {
-            try { resolve(JSON.parse(raw || "{}")); }
-            catch (e) { reject(new Error("Invalid JSON")); }
-        });
-        req.on("error", reject);
-    });
-}
-
 module.exports = async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -22,7 +7,8 @@ module.exports = async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
     try {
-        const { messages } = await parseBody(req);
+        const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
+        const { messages } = body;
 
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
             return res.status(400).json({ error: "Messages required" });
@@ -56,7 +42,7 @@ module.exports = async function handler(req, res) {
         return res.json({ answer });
 
     } catch (err) {
-        console.error("ask-ai error:", err);
+        console.error("ask-ai error:", err.message, err.stack);
         return res.status(500).json({ error: err.message || "AI Error" });
     }
 };
