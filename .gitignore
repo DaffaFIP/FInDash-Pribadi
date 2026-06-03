@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 # Environment
-.env
+env
 *.local
 
 # Firebase Admin SDK key (jangan commit!)
