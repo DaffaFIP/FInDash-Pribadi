@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
 
 export default function AIChat({ user }) {
 
@@ -11,11 +13,13 @@ export default function AIChat({ user }) {
 
     const [question, setQuestion] = useState("");
     const [messages, setMessages] = useState([]);
-    const [provider, setProvider] = useState("ollama");
+    const [provider, setProvider] = useState(isLocal ? "ollama" : "openrouter");
     const [providerLoading, setProviderLoading] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [memoryReady, setMemoryReady] = useState(false);
     const initialized = useRef(false);
     const chatEndRef = useRef(null);
+    const systemPromptRef = useRef(null);
 
     const scrollToBottom = () => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -25,6 +29,7 @@ export default function AIChat({ user }) {
         scrollToBottom();
     }, [messages]);
 
+    // --- LOCAL MODE: fetch & switch provider via Express server ---
     const fetchProvider = async () => {
         try {
             const token = await user.getIdToken();
@@ -59,50 +64,84 @@ export default function AIChat({ user }) {
         }
     };
 
+    // --- LOCAL: init via Express server ---
+    const initLocal = async () => {
+
+        try {
+            const token = await user.getIdToken();
+
+            await fetch(API_URL + "/init-ai", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            console.log("AI initialized (local)");
+            fetchProvider();
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    // --- DEPLOYED: init via Firestore client SDK ---
+    const initDeployed = async () => {
+
+        try {
+            const querySnapshot = await getDocs(collection(db, "transactions"));
+
+            const transactions = querySnapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    title: data.title,
+                    category: data.category,
+                    amount: data.amount,
+                    date: data.Date?.toDate().toLocaleDateString("id-ID") || "-",
+                };
+            });
+
+            const formatted = transactions
+                .map((t) =>
+                    `- ${t.title}\nkategori: ${t.category}\njumlah: Rp${t.amount}\ntanggal: ${t.date}`
+                )
+                .join("\n");
+
+            systemPromptRef.current =
+                "Anda adalah AI financial analyst.\n\n" +
+                "Berikut data transaksi user:\n\n" +
+                formatted + "\n\n" +
+                "Gunakan data ini untuk menjawab seluruh pertanyaan user.\n\n" +
+                "Jawab singkat, jelas, dan profesional.";
+
+            setMemoryReady(true);
+            console.log("AI initialized (deployed)");
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    // --- INIT ---
     useEffect(() => {
 
-        if (!isLocal) return;
-
-        const initAI = async () => {
-
-            try {
-
-                const token = await user.getIdToken();
-
-                await fetch(
-                    API_URL + "/init-ai",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
-
-                console.log("AI Initialized");
-
-            } catch (err) {
-
-                console.log(err);
-
-            }
-
-        };
-
         if (initialized.current) return;
-
         initialized.current = true;
 
-        initAI();
-        fetchProvider();
+        if (isLocal) {
+            setTimeout(() => initLocal());
+        } else {
+            setTimeout(() => initDeployed());
+        }
 
     }, []);
 
+    // --- ASK AI ---
     const askAI = async () => {
 
-        if (!isLocal || !question || loading) return;
+        if (!question || loading) return;
+        if (!isLocal && !memoryReady) return;
 
         const userQuestion = question;
         setQuestion("");
@@ -111,56 +150,48 @@ export default function AIChat({ user }) {
         setLoading(true);
 
         try {
+            let answer;
 
-            const token = await user.getIdToken();
-
-            const res = await fetch(
-                API_URL + "/ask-ai",
-                {
+            if (isLocal) {
+                const token = await user.getIdToken();
+                const res = await fetch(API_URL + "/ask-ai", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`
+                        Authorization: `Bearer ${token}`,
                     },
+                    body: JSON.stringify({ question: userQuestion }),
+                });
+                const data = await res.json();
+                answer = data.answer;
+            } else {
+                const res = await fetch("/api/ask", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        question: userQuestion
-                    })
-                }
-            );
+                        messages: [
+                            { role: "system", content: systemPromptRef.current },
+                            ...messages,
+                            { role: "user", content: userQuestion },
+                        ],
+                    }),
+                });
+                const data = await res.json();
+                answer = data.answer;
+            }
 
+            setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
 
-            const data = await res.json();
-            setMessages((prev) => [...prev, { role: "assistant", content: data.answer }]);
         } catch (err) {
-
             console.log(err);
-            setMessages((prev) => [...prev, { role: "assistant", content: "Maaf, terjadi kesalahan. Coba lagi nanti." }]);
-
+            setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: "Maaf, terjadi kesalahan. Coba lagi nanti." },
+            ]);
         } finally {
             setLoading(false);
         }
     };
-
-
-    if (!isLocal) {
-        return (
-            <div className="mx-auto flex min-h-[60vh] max-w-4xl items-center justify-center p-6">
-                <div className="rounded-2xl border bg-white p-8 text-center shadow">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
-                        <svg className="h-8 w-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <h2 className="mb-2 text-xl font-bold text-slate-800">
-                        AI Assistant Tidak Tersedia
-                    </h2>
-                    <p className="mx-auto max-w-sm text-sm text-slate-500">
-                        Fitur AI Assistant hanya dapat digunakan saat aplikasi dijalankan secara lokal dengan server AI yang berjalan.
-                    </p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <>
@@ -191,20 +222,31 @@ export default function AIChat({ user }) {
                     AI Financial Assistant
                 </h1>
 
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-500">AI:</span>
-                    <button
-                        onClick={() => switchProvider(provider === "ollama" ? "openrouter" : "ollama")}
-                        disabled={providerLoading}
-                        className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                            provider === "ollama"
-                                ? "bg-indigo-100 text-indigo-700"
-                                : "bg-purple-100 text-purple-700"
-                        } disabled:opacity-50`}
-                    >
-                        {providerLoading ? "..." : provider === "ollama" ? "Ollama" : "Open Router"}
-                    </button>
-                </div>
+                {isLocal && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-500">AI:</span>
+                        <button
+                            onClick={() => switchProvider(provider === "ollama" ? "openrouter" : "ollama")}
+                            disabled={providerLoading}
+                            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                                provider === "ollama"
+                                    ? "bg-indigo-100 text-indigo-700"
+                                    : "bg-purple-100 text-purple-700"
+                            } disabled:opacity-50`}
+                        >
+                            {providerLoading ? "..." : provider === "ollama" ? "Ollama" : "Open Router"}
+                        </button>
+                    </div>
+                )}
+
+                {!isLocal && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-500">AI:</span>
+                        <span className="rounded-lg bg-purple-100 px-3 py-1.5 text-sm font-medium text-purple-700">
+                            Open Router
+                        </span>
+                    </div>
+                )}
             </div>
 
             <div className="flex-1 space-y-4 overflow-y-auto rounded-2xl border bg-slate-50 p-4">
@@ -260,12 +302,12 @@ export default function AIChat({ user }) {
                     onKeyDown={(e) => e.key === "Enter" && askAI()}
                     placeholder="Tanya tentang keuangan anda..."
                     className="flex-1 rounded-xl border p-4 outline-none transition focus:ring-2 focus:ring-indigo-500"
-                    disabled={loading}
+                    disabled={loading || (!isLocal && !memoryReady)}
                 />
 
                 <button
                     onClick={askAI}
-                    disabled={loading || !question.trim()}
+                    disabled={loading || !question.trim() || (!isLocal && !memoryReady)}
                     className="rounded-xl bg-indigo-600 px-6 py-4 text-white transition hover:bg-indigo-700 disabled:opacity-50"
                 >
                     Kirim
