@@ -109,96 +109,118 @@ The application is a **single-user personal finance tool** — not a multi-tenan
 The application follows a **three-part monorepo** architecture:
 
 ```mermaid
-graph TB
-    subgraph "Browser (React SPA)"
-        A[React App<br/>Vite Dev Server :5173]
-        B[Firebase Client SDK<br/>Auth + Firestore]
-        C[Recharts Charts]
-        D[AI Chat UI]
+flowchart LR
+    subgraph FE[Browser - React SPA]
+        A1[React App]
+        A2[Firebase SDK]
+        A3[Recharts]
+        A4[AI Chat UI]
     end
 
-    subgraph "Vercel (Production)"
-        E[Vercel Serverless<br/>api/ask.js]
-        F[Static SPA<br/>index.html + assets]
+    subgraph BE[Local Backend]
+        B1[Express Server]
+        B2[Firebase Admin]
+        B3[Ollama]
     end
 
-    subgraph "Local Backend"
-        G[Express Server<br/>:3001]
-        H[Firebase Admin SDK]
-        I[Ollama<br/>:11434]
+    subgraph Vercel[Vercel Production]
+        C1[Serverless api/ask.js]
     end
 
-    subgraph "Cloud Services"
-        J[Firebase Auth]
-        K[Firestore<br/>transactions]
-        L[OpenRouter API]
+    subgraph Cloud[Cloud Services]
+        D1[Firebase Auth]
+        D2[Firestore]
+        D3[OpenRouter]
     end
 
-    A --> B
-    B --> J
-    B --> K
-    A --> C
-    A --> D
-
-    D -->|local| G
-    D -->|deployed| E
-    G --> H
-    G --> I
-    G --> L
-    E --> L
-    H --> K
-    H --> J
+    A1 --> A2
+    A2 --> D1
+    A2 --> D2
+    A1 --> A3
+    A1 --> A4
+    A4 -- local --> B1
+    A4 -- deployed --> C1
+    B1 --> B2
+    B1 --> B3
+    B1 --> D3
+    C1 --> D3
+    B2 --> D2
+    B2 --> D1
 ```
 
 ### Request Flow
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Browser as React SPA
-    participant Firebase
-    participant Server as Express :3001
-    participant AI as Ollama/OpenRouter
+    participant U as User
+    participant B as React SPA
+    participant F as Firebase
+    participant S as Express Server
+    participant A as Ollama/OpenRouter
 
-    User->>Browser: Login (email/password)
-    Browser->>Firebase: signInWithEmailAndPassword()
-    Firebase-->>Browser: ID Token
+    U->>B: Login
+    B->>F: signInWithEmailAndPassword()
+    F-->>B: ID Token
+    B-->>U: Authenticated
 
-    User->>Browser: Navigate to Dashboard
-    Browser->>Firebase: getDocs(transactions)
-    Firebase-->>Browser: Transaction array
+    U->>B: View Dashboard
+    B->>F: getDocs(transactions)
+    F-->>B: Transaction data
+    B-->>U: Charts + Table
 
-    User->>Browser: Add transaction
-    Browser->>Firebase: addDoc(transactions, {...})
-    Firebase-->>Browser: Success
+    U->>B: Add transaction
+    B->>F: addDoc(transactions)
+    F-->>B: Success
+    B-->>U: Confirmed
 
-    User->>Browser: Open AI Chat
-    Browser->>Server: POST /init-ai (Bearer token)
-    Server->>Firebase: Admin SDK read transactions
-    Server->>Server: Build system prompt
-    Server-->>Browser: Initialized
+    U->>B: Open AI Chat
+    B->>S: POST /init-ai
+    S->>F: Read transactions
+    F-->>S: Transaction data
+    S-->>B: Initialized
 
-    User->>Browser: Ask question
-    Browser->>Server: POST /ask-ai { question }
-    Server->>AI: Forward messages
-    AI-->>Server: AI response
-    Server-->>Browser: { answer }
+    U->>B: Ask question
+    B->>S: POST /ask-ai
+    S->>A: Forward messages
+    A-->>S: AI response
+    S-->>B: Answer
+    B-->>U: Display response
 ```
 
 ### Data Flow
 
 ```mermaid
 flowchart LR
-    A[AddData.jsx] -->|addDoc| B[(Firestore<br/>transactions)]
-    C[Tabel.jsx] -->|getDocs / updateDoc / deleteDoc| B
-    D[Chart.jsx] -->|getDocs| B
-    E[Brownie.jsx] -->|getDocs| B
-    F[Header.jsx] -->|getDocs| B
-    G[AIChat.jsx] -->|getDocs| B
-    G -->|/ask-ai| H[Express Server]
-    H -->|Admin SDK read| B
-    H -->|/api/chat| I[Ollama]
-    H -->|/chat/completions| J[OpenRouter]
+    subgraph Client[React App]
+        A1[AddData.jsx]
+        A2[Tabel.jsx]
+        A3[Chart.jsx]
+        A4[Brownie.jsx]
+        A5[Header.jsx]
+        A6[AIChat.jsx]
+    end
+
+    subgraph Server[Express Backend]
+        B1[server.js]
+    end
+
+    subgraph AI[AI Providers]
+        C1[Ollama]
+        C2[OpenRouter]
+    end
+
+    DB[(Firestore)]
+
+    A1 -- write --> DB
+    A2 -- read/write --> DB
+    A3 -- read --> DB
+    A4 -- read --> DB
+    A5 -- read --> DB
+    A6 -- read --> DB
+    A6 -- ask AI --> B1
+    B1 -- admin read --> DB
+    B1 -- local LLM --> C1
+    B1 -- cloud LLM --> C2
 ```
 
 ### Service Boundaries
