@@ -30,3 +30,7 @@ server/.env
 
 # Firebase Admin SDK key (jangan commit!)
 server/serviceAccountKey.json
+
+
+# md file
+AGENTS.md
