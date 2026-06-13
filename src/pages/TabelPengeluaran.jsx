@@ -42,7 +42,7 @@ export default function App({ user }) {
     title: "",
   });
 
-  //state untuk edit
+  // state for edit
   const [isEditOpen, setIsEditOpen] =
     useState(false);
 
@@ -88,7 +88,7 @@ export default function App({ user }) {
         setExpenses(data);
       } catch (error) {
         console.log(error);
-        setError("Gagal memuat data");
+        setError("Failed to load data");
       } finally {
         setLoading(false);
       }
@@ -114,7 +114,7 @@ export default function App({ user }) {
 
       setIsDeleteOpen(false);
       setDeleteId(null);
-      setSuccessMessage("Data berhasil dihapus");
+      setSuccessMessage("Data deleted successfully");
       setIsSuccessOpen(true);
 
     } catch (error) {
@@ -156,7 +156,7 @@ export default function App({ user }) {
       );
 
       setIsEditOpen(false);
-      setSuccessMessage("Data berhasil diperbarui");
+      setSuccessMessage("Data updated successfully");
       setIsSuccessOpen(true);
 
     } catch (error) {
@@ -169,7 +169,7 @@ export default function App({ user }) {
 
   // CURRENCY
   const currency = (value) => {
-    return new Intl.NumberFormat("id-ID", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "IDR",
     }).format(value);
@@ -220,13 +220,13 @@ export default function App({ user }) {
 
   const pageRange = useMemo(() => {
     const total = totalPages;
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
 
     const pages = [];
     pages.push(1);
 
-    let start = Math.max(2, currentPage - 1);
-    let end = Math.min(total - 1, currentPage + 1);
+    let start = Math.max(2, currentPage);
+    let end = Math.min(total - 1, currentPage);
 
     if (currentPage <= 3) { start = 2; end = 4; }
     if (currentPage >= total - 2) { start = total - 3; end = total - 1; }
@@ -251,7 +251,7 @@ export default function App({ user }) {
       {/* TABLE */}
       <div className="rounded-lg border border-slate-200 bg-white p-6">
         <h2 className="mb-4 text-xl font-semibold">
-          Daftar Pengeluaran
+          Expense List
         </h2>
 
         {loading ? (
@@ -269,7 +269,7 @@ export default function App({ user }) {
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:flex-wrap">
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-slate-400">Cari</span>
+                <span className="text-xs text-slate-400">Search</span>
                 <input
                   type="text"
                   value={searchTerm}
@@ -277,13 +277,13 @@ export default function App({ user }) {
                     setSearchTerm(e.target.value);
                     setCurrentPage(1);
                   }}
-                  placeholder="Cari judul..."
+                  placeholder="Search title..."
                   className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:min-w-[160px]"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-slate-400">Periode</span>
+                <span className="text-xs text-slate-400">Period</span>
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
@@ -294,7 +294,7 @@ export default function App({ user }) {
                     }}
                     className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:flex-none"
                   />
-                  <span className="text-xs text-slate-400">s/d</span>
+                  <span className="text-xs text-slate-400">to</span>
                   <input
                     type="date"
                     value={endDate}
@@ -308,7 +308,7 @@ export default function App({ user }) {
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-slate-400">Kategori</span>
+                <span className="text-xs text-slate-400">Category</span>
                 <select
                   value={selectedCategory}
                   onChange={(e) => {
@@ -317,7 +317,7 @@ export default function App({ user }) {
                   }}
                   className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:min-w-[140px]"
                 >
-                  <option value="all">Semua kategori</option>
+                  <option value="all">All categories</option>
                   {categoryOptions
                     .filter((c) => c !== "all")
                     .map((category) => (
@@ -339,7 +339,7 @@ export default function App({ user }) {
                 }}
                 className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-100 md:w-auto"
               >
-                Reset filter
+                Reset Filters
               </button>
             </div>
             </div>
@@ -349,10 +349,10 @@ export default function App({ user }) {
             <thead className="bg-slate-50 border-b-2 border-slate-300">
               <tr>
                 <th className="p-3 text-left text-sm font-semibold">Title</th>
-                <th className="p-3 text-left text-sm font-semibold">Tanggal</th>
-                <th className="p-3 text-left text-sm font-semibold">Kategori</th>
-                <th className="p-3 text-left text-sm font-semibold">Jumlah</th>
-                {user && <th className="p-3 text-left text-sm font-semibold">Aksi</th>}
+                <th className="p-3 text-left text-sm font-semibold">Date</th>
+                <th className="p-3 text-left text-sm font-semibold">Category</th>
+                <th className="p-3 text-left text-sm font-semibold">Amount</th>
+                {user && <th className="p-3 text-left text-sm font-semibold">Actions</th>}
               </tr>
             </thead>
 
@@ -369,7 +369,7 @@ export default function App({ user }) {
 
                     <td className="p-3">
                       {item.Date?.toLocaleDateString(
-                        "id-ID"
+                        "en-US"
                       )}
                     </td>
 
@@ -420,7 +420,7 @@ export default function App({ user }) {
                     colSpan={user ? 5 : 4}
                     className="p-4 text-center text-slate-500"
                   >
-                    Data tidak ditemukan.
+                    No data found.
                   </td>
                 </tr>
               )}
@@ -429,7 +429,7 @@ export default function App({ user }) {
         </div>
 
             {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-center gap-1 md:justify-start">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-0.5 md:gap-1 md:justify-start">
 
               <button
                 onClick={() =>
@@ -438,21 +438,21 @@ export default function App({ user }) {
                   )
                 }
                 disabled={currentPage === 1}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-slate-300 bg-white px-1.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50 md:px-3 md:py-2 md:text-sm"
               >
-                Sebelumnya
+                ‹ Previous
               </button>
 
               {pageRange.map((page, i) =>
                 page === "..." ? (
-                  <span key={`ellipsis-${i}`} className="px-2 text-sm text-slate-400">
+                  <span key={`ellipsis-${i}`} className="px-1 text-xs text-slate-400 md:px-2 md:text-sm">
                     ...
                   </span>
                 ) : (
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`min-w-[36px] rounded-lg border px-2 py-2 text-center text-sm ${
+                    className={`min-w-[28px] rounded-lg border px-1 py-1 text-center text-xs md:min-w-[36px] md:px-2 md:py-2 md:text-sm ${
                       currentPage === page
                         ? "border-indigo-600 bg-indigo-600 text-white"
                         : "border-slate-300 bg-white"
@@ -476,9 +476,9 @@ export default function App({ user }) {
                   currentPage === totalPages ||
                   totalPages === 0
                 }
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-slate-300 bg-white px-1.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50 md:px-3 md:py-2 md:text-sm"
               >
-                Selanjutnya
+                Next ›
               </button>
 
             </div>

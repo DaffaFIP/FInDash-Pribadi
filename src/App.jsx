@@ -7,7 +7,7 @@ import {
 } from 'react-router-dom'
 
 import Home from './pages/Home'
-import AddDataPengeluaran from './pages/AddDataPengeluaran'
+import AddData from './pages/AddData'
 import Login from './pages/Login'
 import AIChat from './pages/AIChat'
 import ProtectedRoute from "./pages/ProtectedRoute";
@@ -22,7 +22,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [showNavbar, setShowNavbar] = useState(true);
 
-  // cek login firebase
+  // check firebase auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -85,11 +85,11 @@ export default function App() {
           {/* text */}
           <div className="text-center">
             <p className="text-sm font-medium text-slate-700">
-              Memuat aplikasi
+              Loading application
             </p>
 
             <p className="mt-1 text-xs text-slate-500">
-              Mohon tunggu sebentar...
+              Please wait a moment...
             </p>
           </div>
 
@@ -166,7 +166,7 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute user={user}>
-              <AddDataPengeluaran user={user} />
+              <AddData user={user} />
             </ProtectedRoute>
           }
         />
@@ -184,7 +184,7 @@ export default function App() {
           path="/adddata"
           element={
             <ProtectedRoute user={user}>
-              <AddDataPengeluaran user={user} />
+              <AddData user={user} />
             </ProtectedRoute>
           }
         />

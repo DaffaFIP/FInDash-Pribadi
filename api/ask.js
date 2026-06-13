@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
         }
 
         const data = await response.json();
-        const answer = data.choices?.[0]?.message?.content || "Maaf, tidak ada jawaban.";
+        const answer = data.choices?.[0]?.message?.content || "Sorry, no answer available.";
         return res.json({ answer });
 
     } catch (err) {

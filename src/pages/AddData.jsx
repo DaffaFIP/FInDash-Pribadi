@@ -44,7 +44,7 @@ export default function AddTransaction() {
         }
       );
 
-      alert("Data berhasil ditambahkan");
+      alert("Transaction added successfully");
 
       setForm({
         title: "",
@@ -63,7 +63,7 @@ export default function AddTransaction() {
       <div className="mx-auto max-w-xl rounded-2xl bg-white p-6 shadow">
 
         <h1 className="mb-6 text-2xl font-bold">
-          Tambah Transaksi
+          Add Transaction
         </h1>
 
         <form
@@ -100,7 +100,7 @@ export default function AddTransaction() {
               className="w-full rounded-lg border p-3"
               required
             >
-              <option value="">-- Pilih Category --</option>
+              <option value="">-- Select Category --</option>
               <option value="Jajan">Jajan</option>
               <option value="Transport">Transport</option>
               <option value="Gadget">Gadget</option>
@@ -147,7 +147,7 @@ export default function AddTransaction() {
             type="submit"
             className="w-full rounded-xl bg-indigo-600 py-3 text-white hover:bg-indigo-700"
           >
-            Simpan
+            Save
           </button>
 
         </form>

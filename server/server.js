@@ -37,7 +37,7 @@ app.use(express.json({ limit: "1mb" }));
 const limiter = rateLimit({
     windowMs: 60 * 1000,
     max: 30,
-    message: { error: "Terlalu banyak request, coba lagi nanti" },
+    message: { error: "Too many requests, please try again later" },
 });
 app.use(limiter);
 
@@ -54,7 +54,7 @@ app.get("/", (req, res) => {
 
 
 // INIT AI
-// dipanggil SEKALI saat halaman AI dibuka
+// called ONCE when the AI page is opened
 
 app.post("/init-ai", async (req, res) => {
 
@@ -75,16 +75,16 @@ app.post("/init-ai", async (req, res) => {
 
         const { transactions } = req.body;
         if (!transactions || !Array.isArray(transactions)) {
-            return res.status(400).json({ error: "Data transaksi diperlukan" });
+            return res.status(400).json({ error: "Transaction data required" });
         }
 
 
         const formattedTransactions = transactions
             .map(t => `
         - ${t.title}
-        kategori: ${t.category}
-        jumlah: Rp${t.amount}
-        tanggal: ${t.date}
+        category: ${t.category}
+        amount: Rp${t.amount}
+        date: ${t.date}
         `)
             .join("\n");
 
@@ -99,15 +99,15 @@ app.post("/init-ai", async (req, res) => {
             {
                 role: "system",
                 content: `
-        Anda adalah AI financial analyst.
+        You are an AI financial analyst.
 
-        Berikut data transaksi user:
+        Here is the user's transaction data:
 
         ${formattedTransactions}
 
-        Gunakan data ini untuk menjawab seluruh pertanyaan user.
+        Use this data to answer all user questions.
 
-        Jawab singkat, jelas, dan profesional.
+        Answer concisely, clearly, and professionally.
 `
             }
         ]);
@@ -139,7 +139,7 @@ app.post("/ask-ai", async (req, res) => {
         const { question } = req.body;
 
         if (!question || typeof question !== "string" || !question.trim()) {
-            return res.status(400).json({ error: "Question harus diisi" });
+            return res.status(400).json({ error: "Question is required" });
         }
 
         const uid = req.user.uid;
@@ -148,7 +148,7 @@ app.post("/ask-ai", async (req, res) => {
         if (!userMemories.has(uid)) {
 
             return res.status(400).json({
-                error: "AI belum diinit"
+                error: "AI not initialized"
             });
 
         }
@@ -169,7 +169,7 @@ app.post("/ask-ai", async (req, res) => {
         if (aiProvider === "openrouter") {
             const apiKey = process.env.OPENROUTER_API_KEY;
             if (!apiKey || apiKey === "sk-or-v1-your-key-here") {
-                return res.status(400).json({ error: "OPENROUTER_API_KEY belum diatur di server/.env" });
+                return res.status(400).json({ error: "OPENROUTER_API_KEY not set in server/.env" });
             }
 
             const openrouterRes = await axios.post(
@@ -187,7 +187,7 @@ app.post("/ask-ai", async (req, res) => {
                 }
             );
 
-            aiMessage = openrouterRes.data.choices?.[0]?.message?.content || "Maaf, tidak ada jawaban.";
+            aiMessage = openrouterRes.data.choices?.[0]?.message?.content || "Sorry, no answer available.";
         } else {
             // default: ollama
             const ollamaRes = await axios.post(
@@ -202,10 +202,10 @@ app.post("/ask-ai", async (req, res) => {
                 }
             );
 
-            aiMessage = ollamaRes.data.message?.content || "Maaf, tidak ada jawaban.";
+            aiMessage = ollamaRes.data.message?.content || "Sorry, no answer available.";
         }
 
-        // simpan jawaban AI ke memory
+        // save AI answer to memory
         memory.push({
             role: "assistant",
             content: aiMessage
@@ -245,7 +245,7 @@ app.get("/provider", (req, res) => {
 app.post("/provider", (req, res) => {
     const { provider } = req.body;
     if (provider !== "ollama" && provider !== "openrouter") {
-        return res.status(400).json({ error: "Provider harus 'ollama' atau 'openrouter'" });
+        return res.status(400).json({ error: "Provider must be 'ollama' or 'openrouter'" });
     }
     aiProvider = provider;
     console.log("AI Provider changed to:", provider);
@@ -258,7 +258,7 @@ app.post("/provider", (req, res) => {
 app.listen(3001, () => {
 
     console.log(
-        "Server berjalan di http://localhost:3001"
+        "Server running on http://localhost:3001"
     );
 
 });

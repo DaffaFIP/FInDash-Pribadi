@@ -22,7 +22,7 @@ export default function App() {
 
   // NAMA BULAN
   const monthName = new Date().toLocaleDateString(
-    "id-ID",
+    "en-US",
     {
       month: "long",
     }
@@ -53,7 +53,7 @@ export default function App() {
         setExpenses(data);
       } catch (error) {
         console.log(error);
-        setError("Gagal memuat data");
+        setError("Failed to load data");
       } finally {
         setLoading(false);
       }
@@ -98,7 +98,7 @@ export default function App() {
 
   // CURRENCY
   const currency = (value) => {
-    return new Intl.NumberFormat("id-ID", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "IDR",
     }).format(value);
@@ -120,7 +120,7 @@ export default function App() {
           </h1>
 
           <p className="mt-2 text-slate-500">
-            Monitoring pengeluaran harian
+            Daily Expense Monitor
           </p>
 
           <div className="mt-4">
@@ -128,7 +128,7 @@ export default function App() {
               <div className="h-7 w-48 animate-pulse rounded bg-slate-200" />
             ) : (
               <h2 className="text-xl font-semibold text-indigo-600">
-              Pengeluaran {monthName} :
+              {monthName} Expenses :
                 {" "}
                 {currency(totalExpense)}
               </h2>

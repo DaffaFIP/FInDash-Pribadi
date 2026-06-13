@@ -36,7 +36,7 @@ export default function Login() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      setMessage("Login berhasil!");
+      setMessage("Login successful!");
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -49,7 +49,7 @@ export default function Login() {
     setIsLoading(true);
     setMessage("");
     await signOut(auth);
-    setMessage("Logout berhasil!");
+    setMessage("Logout successful!");
   };
 
   return (
@@ -68,7 +68,7 @@ export default function Login() {
                 {user.email?.charAt(0).toUpperCase()}
               </div>
               <div>
-                <p className="text-sm text-slate-500">Selamat datang kembali,</p>
+                <p className="text-sm text-slate-500">Welcome back,</p>
                 <p className="text-base font-semibold text-slate-700">
                   {user.email}
                 </p>
@@ -121,7 +121,7 @@ export default function Login() {
               <input
                 id="email"
                 type="email"
-                placeholder="Masukkan email"
+                placeholder="Enter email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -139,7 +139,7 @@ export default function Login() {
               <input
                 id="password"
                 type="password"
-                placeholder="Masukkan password"
+                placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -186,7 +186,7 @@ export default function Login() {
         {message && (
           <div
             className={`mt-4 p-3 rounded-lg text-center font-medium ${
-              message.includes("berhasil")
+              message.includes("successful")
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
             }`}

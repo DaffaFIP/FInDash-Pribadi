@@ -78,7 +78,7 @@ export default function AIChat({ user }) {
                     title: data.title,
                     category: data.category,
                     amount: data.amount,
-                    date: data.Date?.toDate().toLocaleDateString("id-ID") || "-",
+                    date: data.Date?.toDate().toLocaleDateString("en-US") || "-",
                 };
             });
 
@@ -111,22 +111,22 @@ export default function AIChat({ user }) {
                     title: data.title,
                     category: data.category,
                     amount: data.amount,
-                    date: data.Date?.toDate().toLocaleDateString("id-ID") || "-",
+                    date: data.Date?.toDate().toLocaleDateString("en-US") || "-",
                 };
             });
 
             const formatted = transactions
                 .map((t) =>
-                    `- ${t.title}\nkategori: ${t.category}\njumlah: Rp${t.amount}\ntanggal: ${t.date}`
+                    `- ${t.title}\ncategory: ${t.category}\namount: Rp${t.amount}\ndate: ${t.date}`
                 )
                 .join("\n");
 
             systemPromptRef.current =
-                "Anda adalah AI financial analyst.\n\n" +
-                "Berikut data transaksi user:\n\n" +
+                "You are an AI financial analyst.\n\n" +
+                "Here is the user's transaction data:\n\n" +
                 formatted + "\n\n" +
-                "Gunakan data ini untuk menjawab seluruh pertanyaan user.\n\n" +
-                "Jawab singkat, jelas, dan profesional.";
+                "Use this data to answer all user questions.\n\n" +
+                "Answer concisely, clearly, and professionally.";
 
             setMemoryReady(true);
             console.log("AI initialized (deployed)");
@@ -199,7 +199,7 @@ export default function AIChat({ user }) {
                 answer = data.answer;
             }
 
-            if (!answer) throw new Error("Answer kosong");
+            if (!answer) throw new Error("Empty answer");
 
             setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
 
@@ -207,7 +207,7 @@ export default function AIChat({ user }) {
             console.log(err);
             setMessages((prev) => [
                 ...prev,
-                { role: "assistant", content: "Maaf, terjadi kesalahan: " + err.message },
+                { role: "assistant", content: "Sorry, an error occurred: " + err.message },
             ]);
         } finally {
             setLoading(false);
@@ -274,7 +274,7 @@ export default function AIChat({ user }) {
                 {messages.length === 0 ? (
                     <div className="flex h-full items-center justify-center">
                         <p className="text-center text-slate-400">
-                            Tanyakan sesuatu tentang keuangan Anda
+                            Ask something about your finances
                         </p>
                     </div>
                 ) : (
@@ -321,7 +321,7 @@ export default function AIChat({ user }) {
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && askAI()}
-                    placeholder="Tanya tentang keuangan anda..."
+                    placeholder="Ask about your finances..."
                     className="flex-1 rounded-xl border p-4 outline-none transition focus:ring-2 focus:ring-indigo-500"
                     disabled={loading || (!isLocal && !memoryReady)}
                 />
@@ -331,7 +331,7 @@ export default function AIChat({ user }) {
                     disabled={loading || !question.trim() || (!isLocal && !memoryReady)}
                     className="rounded-xl bg-indigo-600 px-6 py-4 text-white transition hover:bg-indigo-700 disabled:opacity-50"
                 >
-                    Kirim
+                    Send
                 </button>
             </div>
         </div>

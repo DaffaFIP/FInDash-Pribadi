@@ -59,7 +59,7 @@ export default function App() {
 
       } catch (error) {
         console.log(error);
-        setError("Gagal memuat data");
+        setError("Failed to load data");
       } finally {
         setLoading(false);
       }
@@ -88,10 +88,10 @@ export default function App() {
     };
 
 
-    // ganti buat prod biar gak tergantung tanggal hari ini
+    // use real time for production
     const today = toDayStart(new Date());
 
-    // pakai buat testing biar data gak berubah-ubah tiap hari
+    // use fixed date for testing so data doesn't change daily
     // const today = toDayStart(new Date(2026, 4, 14));
 
     const isWithinDayRange = (item, daysBack) => {
@@ -135,11 +135,11 @@ export default function App() {
 
     }, [expenses, brownieFilter]);
 
-  // menghitung persentase dan jumlah kotak untuk setiap kategori
+  // calculate percentage and square count for each category
   const currency = (value) => {
 
     return new Intl.NumberFormat(
-      "id-ID",
+      "en-US",
       {
         style: "currency",
         currency: "IDR",
@@ -172,7 +172,7 @@ export default function App() {
       .reduce((a, b) => a + b, 0);
 
     const entries = Object.entries(grouped);
-    // urutkan berdasarkan amount terbesar
+    // sort by highest amount
     entries.sort((a, b) => b[1] - a[1]);
     let accumulated = 0;
 
@@ -186,8 +186,8 @@ export default function App() {
 
         let squareCount;
 
-        // kategori terakhir
-        // supaya total selalu tepat 100
+        // last category
+        // ensure total is always exactly 100
         if (index === entries.length - 1) {
 
           squareCount = 100 - accumulated;
@@ -226,7 +226,7 @@ export default function App() {
   //   Lainnya: "bg-slate-500",
   // };
 
-  // warna per kategori (bisa disesuaikan dengan kategori yang ada di data)
+  // colors per category (adjustable based on available data)
   const categoryColors = {
     Jajan: "bg-[#4F46E5]",
     Transport: "bg-[#EC4899]",
@@ -295,7 +295,7 @@ export default function App() {
       <div className="rounded-2xl bg-white p-6 shadow">
 
         <h2 className="mb-4 text-xl font-semibold">
-          Distribusi Kategori
+          Category Distribution
         </h2>
 
         {loading ? (
@@ -311,7 +311,7 @@ export default function App() {
         <>
         <div className="mb-6 flex items-center gap-3">
           <span className="text-sm font-medium text-slate-500">
-            Periode
+            Period
           </span>
           <select
             value={brownieFilter}
@@ -320,10 +320,10 @@ export default function App() {
             }
             className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
-            <option value="thisMonth">Bulan Ini</option>
-            <option value="7days">7 Hari</option>
-            <option value="30days">30 Hari</option>
-            <option value="all">Semua</option>
+            <option value="thisMonth">This Month</option>
+            <option value="7days">7 Days</option>
+            <option value="30days">30 Days</option>
+            <option value="all">All</option>
           </select>
         </div>
 

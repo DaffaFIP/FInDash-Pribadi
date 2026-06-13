@@ -49,7 +49,7 @@ export default function App({ user }) {
         setExpenses(data);
       } catch (error) {
         console.log(error);
-        setError("Gagal memuat data");
+        setError("Failed to load data");
       } finally {
         setLoading(false);
       }
@@ -67,10 +67,10 @@ export default function App({ user }) {
       return day;
     };
 
-    // ganti buat prod biar gak tergantung tanggal hari ini
+    // use real time for production
     const today = toDayStart(new Date());
 
-    // pakai buat testing biar data gak berubah-ubah tiap hari
+    // use fixed date for testing so data doesn't change daily
     // const today = toDayStart(new Date(2026, 4, 14));
 
     const isWithinDayRange = (item, daysBack) => {
@@ -100,8 +100,8 @@ export default function App({ user }) {
 
     filteredExpenses.forEach((item) => {
 
-      // format tanggal display
-      const dateLabel = item.Date?.toLocaleDateString("id-ID");
+      // format date for display
+      const dateLabel = item.Date?.toLocaleDateString("en-US");
 
       // format key aman untuk sorting
       const dateKey = new Date(item.Date);
@@ -136,14 +136,14 @@ export default function App({ user }) {
 
   const filterTotalLabel =
     filter === "7days"
-      ? "Total 7 hari terakhir"
+      ? "Last 7 days"
       : filter === "30days"
-        ? "Total 30 hari terakhir"
-        : "Total semua data";
+        ? "Last 30 days"
+        : "All time";
 
   // CURRENCY
   const currency = (value) => {
-    return new Intl.NumberFormat("id-ID", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "IDR",
     }).format(value);
@@ -163,7 +163,7 @@ export default function App({ user }) {
       {/* Header CHART */}
       <div className="rounded-2xl bg-white p-6 shadow">
         <h2 className="mb-4 text-xl font-semibold">
-          Grafik Pengeluaran
+          Expense Chart
         </h2>
 
         {loading ? (
@@ -185,7 +185,7 @@ export default function App({ user }) {
               : "bg-slate-200"
               }`}
           >
-            7 Hari
+            7 Days
           </button>
 
           <button
@@ -195,7 +195,7 @@ export default function App({ user }) {
               : "bg-slate-200"
               }`}
           >
-            30 Hari
+            30 Days
           </button>
 
           <button
@@ -205,7 +205,7 @@ export default function App({ user }) {
               : "bg-slate-200"
               }`}
           >
-            Semua
+            All
           </button>
 
           <div className="border-l border-slate-200 pl-4">

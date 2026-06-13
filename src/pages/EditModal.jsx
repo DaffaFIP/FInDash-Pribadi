@@ -37,7 +37,7 @@ export default function EditModal({
         <div className="animate-popup w-full max-w-md rounded-2xl bg-white p-6">
   
           <h2 className="mb-4 text-2xl font-bold">
-            Edit Transaksi
+            Edit Transaction
           </h2>
   
           <div className="space-y-4">
@@ -85,14 +85,14 @@ export default function EditModal({
                 }
                 className="rounded-lg bg-slate-300 px-4 py-2"
               >
-                Batal
+                Cancel
               </button>
   
               <button
                 onClick={handleUpdate}
                 className="rounded-lg bg-indigo-600 px-4 py-2 text-white"
               >
-                Simpan
+                Save
               </button>
   
             </div>

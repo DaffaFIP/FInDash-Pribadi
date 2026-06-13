@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function SuccessModal({ isOpen, onClose, message = "Data berhasil diperbarui" }) {
+export default function SuccessModal({ isOpen, onClose, message = "Data updated successfully" }) {
   const [progress, setProgress] = useState(100);
   const DURATION = 3000;
 
@@ -60,12 +60,12 @@ export default function SuccessModal({ isOpen, onClose, message = "Data berhasil
           <h2 className="text-lg font-semibold text-slate-800">
             {message}
           </h2>
-          <p className="mt-1 text-sm text-slate-500">Tutup secara otomatis...</p>
+          <p className="mt-1 text-sm text-slate-500">Closing automatically...</p>
           <button
             onClick={onClose}
             className="relative mt-4 w-full overflow-hidden rounded-lg bg-slate-100 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-200"
           >
-            <span className="relative z-10">Tutup</span>
+            <span className="relative z-10">Close</span>
             <div
               className="absolute bottom-0 left-0 h-0.5 bg-green-500 transition-[width] duration-75 ease-linear"
               style={{ width: `${progress}%` }}
