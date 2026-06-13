@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const admin = require("firebase-admin");
 const path = require("path");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
@@ -9,21 +8,11 @@ require("dotenv").config({ path: path.join(__dirname, ".env") });
 const app = express();
 
 
-// init Firebase Admin SDK — pakai env var jika ada, fallback ke file
-
-let serviceAccount;
-
-if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-} else {
-    serviceAccount = require("./serviceAccountKey.json");
-}
-
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+// local user — skip verify token untuk development
+app.use((req, res, next) => {
+    req.user = { uid: "local-user" };
+    next();
 });
-
-const db = admin.firestore();
 
 
 // AI MEMORY per-user (Map<uid, array>)
@@ -53,44 +42,6 @@ const limiter = rateLimit({
 app.use(limiter);
 
 
-// VERIFY FIREBASE TOKEN
-
-async function verifyToken(req, res, next) {
-
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-
-        return res.status(401).json({
-            error: "No token"
-        });
-
-    }
-
-    try {
-
-        const token = authHeader.split("Bearer ")[1];
-
-        const decoded =
-            await admin.auth().verifyIdToken(token);
-
-        req.user = decoded;
-
-        next();
-
-    } catch (err) {
-
-        console.log(err);
-
-        return res.status(401).json({
-            error: "Invalid token"
-        });
-
-    }
-
-}
-
-
 // ROOT
 
 app.get("/", (req, res) => {
@@ -105,7 +56,7 @@ app.get("/", (req, res) => {
 // INIT AI
 // dipanggil SEKALI saat halaman AI dibuka
 
-app.post("/init-ai", verifyToken, async (req, res) => {
+app.post("/init-ai", async (req, res) => {
 
     const uid = req.user.uid;
 
@@ -122,26 +73,10 @@ app.post("/init-ai", verifyToken, async (req, res) => {
 
         console.log("Initializing AI for user:", uid);
 
-        // ambil transaksi
-        const snapshot = await db
-            .collection("transactions")
-            .limit(50)
-            .get();
-
-        const transactions = snapshot.docs.map(doc => {
-
-            const data = doc.data();
-
-            return {
-                title: data.title,
-                category: data.category,
-                amount: data.amount,
-                date: data.Date
-                    ? data.Date.toDate().toLocaleDateString("id-ID")
-                    : "-"
-            };
-
-        });
+        const { transactions } = req.body;
+        if (!transactions || !Array.isArray(transactions)) {
+            return res.status(400).json({ error: "Data transaksi diperlukan" });
+        }
 
 
         const formattedTransactions = transactions
@@ -197,7 +132,7 @@ app.post("/init-ai", verifyToken, async (req, res) => {
 
 // ASK AI
 
-app.post("/ask-ai", verifyToken, async (req, res) => {
+app.post("/ask-ai", async (req, res) => {
 
     try {
 
@@ -302,12 +237,12 @@ app.post("/ask-ai", verifyToken, async (req, res) => {
 
 
 // GET PROVIDER
-app.get("/provider", verifyToken, (req, res) => {
+app.get("/provider", (req, res) => {
     res.json({ provider: aiProvider });
 });
 
 // SET PROVIDER
-app.post("/provider", verifyToken, (req, res) => {
+app.post("/provider", (req, res) => {
     const { provider } = req.body;
     if (provider !== "ollama" && provider !== "openrouter") {
         return res.status(400).json({ error: "Provider harus 'ollama' atau 'openrouter'" });

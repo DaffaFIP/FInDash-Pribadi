@@ -1,6 +1,6 @@
 import Header from "./Header";
 import Chart from "./Chart";
-import Tabel from "./Tabel";
+import TabelPengeluaran from "./TabelPengeluaran";
 import Brownie from "./Brownie";
 
 export default function App({ user }) {
@@ -25,7 +25,7 @@ export default function App({ user }) {
         </div>
 
         <div>
-          <Tabel user={user} />
+          <TabelPengeluaran user={user} />
         </div>
 
       </div>

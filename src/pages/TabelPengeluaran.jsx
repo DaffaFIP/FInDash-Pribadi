@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import EditModal from "./EditModal";
 import DeleteModal from "./DeleteModal";
+import SuccessModal from "./SuccessModal";
 import { Trash2, SquarePen } from "lucide-react";
 import {
   collection,
@@ -19,6 +20,8 @@ export default function App({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [selectedCategory, setSelectedCategory] =
     useState("all");
 
@@ -51,6 +54,11 @@ export default function App({ user }) {
       amount: "",
       Date: "",
     });
+
+  const [isSuccessOpen, setIsSuccessOpen] =
+    useState(false);
+  const [successMessage, setSuccessMessage] =
+    useState("");
 
   // FETCH FIREBASE DATA
   useEffect(() => {
@@ -106,6 +114,8 @@ export default function App({ user }) {
 
       setIsDeleteOpen(false);
       setDeleteId(null);
+      setSuccessMessage("Data berhasil dihapus");
+      setIsSuccessOpen(true);
 
     } catch (error) {
       console.log(error);
@@ -146,11 +156,16 @@ export default function App({ user }) {
       );
 
       setIsEditOpen(false);
+      setSuccessMessage("Data berhasil diperbarui");
+      setIsSuccessOpen(true);
 
     } catch (error) {
       console.log(error);
     }
   };
+
+  const closeSuccess = () =>
+    setIsSuccessOpen(false);
 
   // CURRENCY
   const currency = (value) => {
@@ -182,9 +197,13 @@ export default function App({ user }) {
         selectedCategory === "all" ||
         item.category === selectedCategory;
 
-      return titleMatch && categoryMatch;
+      const dateMatch =
+        (!startDate || item.Date >= new Date(startDate)) &&
+        (!endDate || item.Date <= new Date(endDate + "T23:59:59"));
+
+      return titleMatch && categoryMatch && dateMatch;
     });
-  }, [expenses, searchTerm, selectedCategory]);
+  }, [expenses, searchTerm, startDate, endDate, selectedCategory]);
 
   const totalPages = Math.ceil(
     filteredExpenses.length / itemsPerPage
@@ -199,6 +218,27 @@ export default function App({ user }) {
   const currentData =
     filteredExpenses.slice(startIndex, endIndex);
 
+  const pageRange = useMemo(() => {
+    const total = totalPages;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+    const pages = [];
+    pages.push(1);
+
+    let start = Math.max(2, currentPage - 1);
+    let end = Math.min(total - 1, currentPage + 1);
+
+    if (currentPage <= 3) { start = 2; end = 4; }
+    if (currentPage >= total - 2) { start = total - 3; end = total - 1; }
+
+    if (start > 2) pages.push("...");
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (end < total - 1) pages.push("...");
+    if (total > 1) pages.push(total);
+
+    return pages;
+  }, [currentPage, totalPages]);
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
 
@@ -209,7 +249,7 @@ export default function App({ user }) {
       )}
 
       {/* TABLE */}
-      <div className="rounded-2xl bg-white p-6 shadow">
+      <div className="rounded-lg border border-slate-200 bg-white p-6">
         <h2 className="mb-4 text-xl font-semibold">
           Daftar Pengeluaran
         </h2>
@@ -223,75 +263,96 @@ export default function App({ user }) {
             <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
           </div>
         ) : (
+          <>
 
-        <div className="overflow-x-auto">
-          <table className="w-full overflow-hidden rounded-xl">
-            <thead className="bg-slate-200">
-              <tr>
-                <th className="p-3 text-left">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold whitespace-nowrap">
-                      Title
-                    </p>
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                      placeholder="Cari..."
-                      className="w-full min-w-[140px] rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm font-normal outline-none transition focus:border-indigo-500"
-                    />
-                  </div>
-                </th>
+          <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:flex-wrap">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-slate-400">Cari</span>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Cari judul..."
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:min-w-[160px]"
+                />
+              </div>
 
-                <th className="p-3 text-left">
-                  Tanggal
-                </th>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-slate-400">Periode</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:flex-none"
+                  />
+                  <span className="text-xs text-slate-400">s/d</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:flex-none"
+                  />
+                </div>
+              </div>
 
-                <th className="p-3 text-left">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold whitespace-nowrap">
-                      Kategori
-                    </p>
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => {
-                        setSelectedCategory(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                      className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm font-normal outline-none transition focus:border-indigo-500"
-                    >
-                      <option value="all">
-                        Semua kategori
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-slate-400">Kategori</span>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:min-w-[140px]"
+                >
+                  <option value="all">Semua kategori</option>
+                  {categoryOptions
+                    .filter((c) => c !== "all")
+                    .map((category) => (
+                      <option key={category} value={category}>
+                        {category}
                       </option>
-                      {categoryOptions
-                        .filter(
-                          (category) =>
-                            category !== "all"
-                        )
-                        .map((category) => (
-                          <option
-                            key={category}
-                            value={category}
-                          >
-                            {category}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                </th>
+                    ))}
+                </select>
+              </div>
+            </div>
 
-                <th className="p-3 text-left">
-                  Jumlah
-                </th>
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setStartDate("");
+                  setEndDate("");
+                  setSelectedCategory("all");
+                  setCurrentPage(1);
+                }}
+                className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-100 md:w-auto"
+              >
+                Reset filter
+              </button>
+            </div>
+            </div>
 
-                {user && (
-                  <th className="p-3 text-left">
-                    Aksi
-                  </th>
-                )}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-slate-200">
+            <thead className="bg-slate-50 border-b-2 border-slate-300">
+              <tr>
+                <th className="p-3 text-left text-sm font-semibold">Title</th>
+                <th className="p-3 text-left text-sm font-semibold">Tanggal</th>
+                <th className="p-3 text-left text-sm font-semibold">Kategori</th>
+                <th className="p-3 text-left text-sm font-semibold">Jumlah</th>
+                {user && <th className="p-3 text-left text-sm font-semibold">Aksi</th>}
               </tr>
             </thead>
 
@@ -364,10 +425,11 @@ export default function App({ user }) {
                 </tr>
               )}
             </tbody>
+          </table>
+        </div>
 
-
-            {/* PAGINATION */}
-            <div className="mt-6 flex items-center justify-center gap-2">
+            {totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-1 md:justify-start">
 
               <button
                 onClick={() =>
@@ -376,25 +438,27 @@ export default function App({ user }) {
                   )
                 }
                 disabled={currentPage === 1}
-                className="rounded-lg bg-slate-200 px-4 py-2 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Prev
+                Sebelumnya
               </button>
 
-              {Array.from(
-                { length: totalPages },
-                (_, index) => (
+              {pageRange.map((page, i) =>
+                page === "..." ? (
+                  <span key={`ellipsis-${i}`} className="px-2 text-sm text-slate-400">
+                    ...
+                  </span>
+                ) : (
                   <button
-                    key={index}
-                    onClick={() =>
-                      setCurrentPage(index + 1)
-                    }
-                    className={`rounded-lg px-4 py-2 ${currentPage === index + 1
-                      ? "bg-indigo-600 text-white"
-                      : "bg-slate-200"
-                      }`}
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`min-w-[36px] rounded-lg border px-2 py-2 text-center text-sm ${
+                      currentPage === page
+                        ? "border-indigo-600 bg-indigo-600 text-white"
+                        : "border-slate-300 bg-white"
+                    }`}
                   >
-                    {index + 1}
+                    {page}
                   </button>
                 )
               )}
@@ -412,12 +476,13 @@ export default function App({ user }) {
                   currentPage === totalPages ||
                   totalPages === 0
                 }
-                className="rounded-lg bg-slate-200 px-4 py-2 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Next
+                Selanjutnya
               </button>
 
             </div>
+            )}
 
             {/* MODAL */}
             <EditModal
@@ -433,8 +498,13 @@ export default function App({ user }) {
               setIsDeleteOpen={setIsDeleteOpen}
               confirmDelete={confirmDelete}
             />
-          </table>
-        </div>
+
+            <SuccessModal
+              isOpen={isSuccessOpen}
+              onClose={closeSuccess}
+              message={successMessage}
+            />
+          </>
         )}
       </div>
 

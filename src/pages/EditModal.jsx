@@ -17,9 +17,24 @@ export default function EditModal({
     };
   
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-  
-        <div className="w-full max-w-md rounded-2xl bg-white p-6">
+      <>
+        <style>{`
+          @keyframes popup {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+          .animate-popup { animation: popup 0.3s ease-out; }
+
+          @keyframes fade-in {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+          }
+          .animate-fade-in { animation: fade-in 0.2s ease-out; }
+        `}</style>
+
+        <div className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-black/50">
+
+        <div className="animate-popup w-full max-w-md rounded-2xl bg-white p-6">
   
           <h2 className="mb-4 text-2xl font-bold">
             Edit Transaksi
@@ -84,5 +99,6 @@ export default function EditModal({
           </div>
         </div>
       </div>
+    </>
     );
   }

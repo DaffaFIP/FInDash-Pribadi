@@ -87,7 +87,12 @@ export default function App() {
       return day;
     };
 
-    const today = toDayStart(now);
+
+    // ganti buat prod biar gak tergantung tanggal hari ini
+    const today = toDayStart(new Date());
+
+    // pakai buat testing biar data gak berubah-ubah tiap hari
+    // const today = toDayStart(new Date(2026, 4, 14));
 
     const isWithinDayRange = (item, daysBack) => {
       if (!item.Date) return false;
@@ -96,6 +101,16 @@ export default function App() {
       rangeStart.setDate(today.getDate() - daysBack);
       return itemDay >= rangeStart && itemDay <= today;
     };
+
+    if (filter === "thisMonth") {
+      return data.filter((item) => {
+        if (!item.Date) return false;
+        return (
+          item.Date.getMonth() === today.getMonth() &&
+          item.Date.getFullYear() === today.getFullYear()
+        );
+      });
+    }
 
     if (filter === "7days") {
       return data.filter((item) => isWithinDayRange(item, 7));
@@ -294,67 +309,29 @@ export default function App() {
           </div>
         ) : (
         <>
-        <div className="mb-6 flex gap-2">
-
-          <button
-            onClick={() =>
-              setBrownieFilter(
-                "7days"
-              )
+        <div className="mb-6 flex items-center gap-3">
+          <span className="text-sm font-medium text-slate-500">
+            Periode
+          </span>
+          <select
+            value={brownieFilter}
+            onChange={(e) =>
+              setBrownieFilter(e.target.value)
             }
-            className={`
-              rounded-lg px-4 py-2 text-sm
-              ${brownieFilter ===
-                "7days"
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-200"
-              }
-            `}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
-            7 Hari
-          </button>
-
-          <button
-            onClick={() =>
-              setBrownieFilter(
-                "30days"
-              )
-            }
-            className={`
-              rounded-lg px-4 py-2 text-sm
-              ${brownieFilter ===
-                "30days"
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-200"
-              }
-            `}
-          >
-            30 Hari
-          </button>
-
-          <button
-            onClick={() =>
-              setBrownieFilter("all")
-            }
-            className={`
-              rounded-lg px-4 py-2 text-sm
-              ${brownieFilter ===
-                "all"
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-200"
-              }
-            `}
-          >
-            Semua
-          </button>
-
+            <option value="thisMonth">Bulan Ini</option>
+            <option value="7days">7 Hari</option>
+            <option value="30days">30 Hari</option>
+            <option value="all">Semua</option>
+          </select>
         </div>
 
         <div
           className="flex flex-col items-center gap-8 lg:flex-row lg:items-start    lg:justify-center">
 
           {/* GRID */}
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
 
             <div
               className=" grid grid-cols-10 gap-[2px] bg-white p-[2px] rounded-sm"
@@ -386,7 +363,7 @@ export default function App() {
 
           {/* LEGEND */}
           <div
-            className="grid w-full gap-3 sm:grid-cols-2 lg:w-[320px] lg:grid-cols-1"
+            className="w-full rounded-xl border border-slate-200 bg-white divide-y divide-slate-100 lg:w-[320px]"
           >
 
             {brownieData.map(
@@ -398,11 +375,7 @@ export default function App() {
                   className="
                     flex items-center
                     justify-between
-                    rounded-2xl
-                    border
-                    bg-white
-                    p-4
-                    shadow
+                    p-3
                   "
                 >
 

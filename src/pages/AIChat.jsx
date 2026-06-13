@@ -64,11 +64,23 @@ export default function AIChat({ user }) {
         }
     };
 
-    // --- LOCAL: init via Express server ---
+    // --- LOCAL: ambil transaksi via client SDK, kirim ke Express server ---
     const initLocal = async () => {
 
         try {
             const token = await user.getIdToken();
+
+            // ambil transaksi via client SDK (sama seperti initDeployed)
+            const querySnapshot = await getDocs(collection(db, "transactions"));
+            const transactions = querySnapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    title: data.title,
+                    category: data.category,
+                    amount: data.amount,
+                    date: data.Date?.toDate().toLocaleDateString("id-ID") || "-",
+                };
+            });
 
             await fetch(API_URL + "/init-ai", {
                 method: "POST",
@@ -76,6 +88,7 @@ export default function AIChat({ user }) {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
+                body: JSON.stringify({ transactions }),
             });
 
             console.log("AI initialized (local)");

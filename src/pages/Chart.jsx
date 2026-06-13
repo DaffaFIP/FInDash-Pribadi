@@ -67,7 +67,11 @@ export default function App({ user }) {
       return day;
     };
 
+    // ganti buat prod biar gak tergantung tanggal hari ini
     const today = toDayStart(new Date());
+
+    // pakai buat testing biar data gak berubah-ubah tiap hari
+    // const today = toDayStart(new Date(2026, 4, 14));
 
     const isWithinDayRange = (item, daysBack) => {
       if (!item.Date) return false;

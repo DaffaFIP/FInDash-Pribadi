@@ -7,8 +7,7 @@ import {
 } from 'react-router-dom'
 
 import Home from './pages/Home'
-import About from './pages/About'
-import AddData from './pages/AddData'
+import AddDataPengeluaran from './pages/AddDataPengeluaran'
 import Login from './pages/Login'
 import AIChat from './pages/AIChat'
 import ProtectedRoute from "./pages/ProtectedRoute";
@@ -167,7 +166,7 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute user={user}>
-              <AddData user={user} />
+              <AddDataPengeluaran user={user} />
             </ProtectedRoute>
           }
         />
@@ -182,19 +181,10 @@ export default function App() {
         />
 
         <Route
-          path="/about"
-          element={
-            <ProtectedRoute user={user}>
-              <About user={user} />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/adddata"
           element={
             <ProtectedRoute user={user}>
-              <AddData user={user} />
+              <AddDataPengeluaran user={user} />
             </ProtectedRoute>
           }
         />
