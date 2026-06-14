@@ -80,12 +80,12 @@ app.post("/init-ai", async (req, res) => {
 
 
         const formattedTransactions = transactions
-            .map(t => `
-        - ${t.title}
-        category: ${t.category}
-        amount: Rp${t.amount}
-        date: ${t.date}
-        `)
+            .map(t => {
+                let line = `\n        - ${t.title} (${t.type || "expense"})`;
+                if (t.category) line += `\n        category: ${t.category}`;
+                line += `\n        amount: Rp${t.amount}\n        date: ${t.date}`;
+                return line;
+            })
             .join("\n");
 
         console.log(

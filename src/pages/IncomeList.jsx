@@ -421,6 +421,7 @@ export default function IncomeList({ user }) {
             )}
 
             <EditModal
+              type="income"
               isOpen={isEditOpen}
               editData={editData}
               setEditData={setEditData}

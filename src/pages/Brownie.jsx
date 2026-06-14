@@ -210,7 +210,7 @@ export default function App({ user }) {
 
   // // COLORS
   // const categoryColors = {
-  //   Jajan: "bg-indigo-500",
+  //   Pangan: "bg-indigo-500",
   //   Transport: "bg-pink-500",
   //   Internet: "bg-emerald-500",
   //   Gadget: "bg-cyan-500",
@@ -222,7 +222,7 @@ export default function App({ user }) {
 
   // colors per category (adjustable based on available data)
   const categoryColors = {
-    Jajan: "bg-[#4F46E5]",
+    Pangan: "bg-[#4F46E5]",
     Transport: "bg-[#EC4899]",
     Internet: "bg-[#10B981]",
     Gadget: "bg-[#06B6D4]",

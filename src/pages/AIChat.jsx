@@ -70,17 +70,34 @@ export default function AIChat({ user }) {
         try {
             const token = await user.getIdToken();
 
-            const q = query(collection(db, "expense"), where("uid", "==", user.uid));
-            const querySnapshot = await getDocs(q);
-            const transactions = querySnapshot.docs.map((doc) => {
-                const data = doc.data();
-                return {
-                    title: data.title,
-                    category: data.category,
-                    amount: data.amount,
-                    date: data.Date?.toDate().toLocaleDateString("en-US") || "-",
-                };
-            });
+            const expenseQ = query(collection(db, "expense"), where("uid", "==", user.uid));
+            const incomeQ = query(collection(db, "income"), where("uid", "==", user.uid));
+
+            const [expenseSnap, incomeSnap] = await Promise.all([
+                getDocs(expenseQ), getDocs(incomeQ)
+            ]);
+
+            const transactions = [
+                ...expenseSnap.docs.map((doc) => {
+                    const data = doc.data();
+                    return {
+                        title: data.title,
+                        category: data.category,
+                        amount: data.amount,
+                        date: data.Date?.toDate().toLocaleDateString("en-US") || "-",
+                        type: "expense",
+                    };
+                }),
+                ...incomeSnap.docs.map((doc) => {
+                    const data = doc.data();
+                    return {
+                        title: data.title,
+                        amount: data.amount,
+                        date: data.Date?.toDate().toLocaleDateString("en-US") || "-",
+                        type: "income",
+                    };
+                }),
+            ];
 
             await fetch(API_URL + "/init-ai", {
                 method: "POST",
@@ -103,24 +120,43 @@ export default function AIChat({ user }) {
     const initDeployed = async () => {
 
         try {
-            const q = query(collection(db, "expense"), where("uid", "==", user.uid));
-            const querySnapshot = await getDocs(q);
+            const expenseQ = query(collection(db, "expense"), where("uid", "==", user.uid));
+            const incomeQ = query(collection(db, "income"), where("uid", "==", user.uid));
 
-            const transactions = querySnapshot.docs.map((doc) => {
-                const data = doc.data();
-                return {
-                    title: data.title,
-                    category: data.category,
-                    amount: data.amount,
-                    date: data.Date?.toDate().toLocaleDateString("en-US") || "-",
-                };
-            });
+            const [expenseSnap, incomeSnap] = await Promise.all([
+                getDocs(expenseQ), getDocs(incomeQ)
+            ]);
+
+            const transactions = [
+                ...expenseSnap.docs.map((doc) => {
+                    const data = doc.data();
+                    return {
+                        title: data.title,
+                        category: data.category,
+                        amount: data.amount,
+                        date: data.Date?.toDate().toLocaleDateString("en-US") || "-",
+                        type: "expense",
+                    };
+                }),
+                ...incomeSnap.docs.map((doc) => {
+                    const data = doc.data();
+                    return {
+                        title: data.title,
+                        amount: data.amount,
+                        date: data.Date?.toDate().toLocaleDateString("en-US") || "-",
+                        type: "income",
+                    };
+                }),
+            ];
 
             const formatted = transactions
-                .map((t) =>
-                    `- ${t.title}\ncategory: ${t.category}\namount: Rp${t.amount}\ndate: ${t.date}`
-                )
-                .join("\n");
+                .map((t) => {
+                    let line = `- ${t.title} (${t.type})`;
+                    if (t.category) line += `\n  category: ${t.category}`;
+                    line += `\n  amount: Rp${t.amount}\n  date: ${t.date}`;
+                    return line;
+                })
+                .join("\n\n");
 
             systemPromptRef.current =
                 "You are an AI financial analyst.\n\n" +

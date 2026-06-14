@@ -24,6 +24,8 @@ export default function App({ user }) {
   const [expenses, setExpenses] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [filter, setFilter] = useState("30days");
+  const [showExpense, setShowExpense] = useState(true);
+  const [showIncome, setShowIncome] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -241,19 +243,25 @@ export default function App({ user }) {
             All
           </button>
 
-          <div className="flex items-center gap-6 border-l border-slate-200 pl-4">
-            <div>
+          <div className="flex items-center gap-4 border-l border-slate-200 pl-4">
+            <button
+              onClick={() => setShowExpense((prev) => !prev)}
+              className={`text-left transition ${showExpense ? "opacity-100" : "opacity-40"}`}
+            >
               <p className="text-sm text-slate-500">Expense</p>
               <p className="text-lg font-semibold text-indigo-600">
                 {currency(totalFilteredExpense)}
               </p>
-            </div>
-            <div>
+            </button>
+            <button
+              onClick={() => setShowIncome((prev) => !prev)}
+              className={`text-left transition ${showIncome ? "opacity-100" : "opacity-40"}`}
+            >
               <p className="text-sm text-slate-500">Income</p>
               <p className="text-lg font-semibold text-green-600">
                 {currency(totalFilteredIncome)}
               </p>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -277,21 +285,25 @@ export default function App({ user }) {
 
               <Legend />
 
-              <Line
-                type="monotone"
-                dataKey="expense"
-                stroke="#4f46e5"
-                strokeWidth={3}
-                name="Expense"
-              />
+              {showExpense && (
+                <Line
+                  type="monotone"
+                  dataKey="expense"
+                  stroke="#4f46e5"
+                  strokeWidth={3}
+                  name="Expense"
+                />
+              )}
 
-              <Line
-                type="monotone"
-                dataKey="income"
-                stroke="#10b981"
-                strokeWidth={3}
-                name="Income"
-              />
+              {showIncome && (
+                <Line
+                  type="monotone"
+                  dataKey="income"
+                  stroke="#10b981"
+                  strokeWidth={3}
+                  name="Income"
+                />
+              )}
             </LineChart>
           </ResponsiveContainer>
         </div>

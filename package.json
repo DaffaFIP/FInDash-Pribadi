@@ -9,7 +9,8 @@
     "dev:server": "node server/server.js",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "migrate:category": "node scripts/migrate-category.mjs"
   },
   "dependencies": {
     "firebase": "^12.13.0",

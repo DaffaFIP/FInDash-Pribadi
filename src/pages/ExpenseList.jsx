@@ -489,6 +489,7 @@ export default function App({ user }) {
 
             {/* MODAL */}
             <EditModal
+              type="expense"
               isOpen={isEditOpen}
               editData={editData}
               setEditData={setEditData}

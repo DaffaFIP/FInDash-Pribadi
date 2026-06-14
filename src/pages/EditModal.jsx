@@ -4,6 +4,7 @@ export default function EditModal({
     setEditData,
     setIsEditOpen,
     handleUpdate,
+    type = "expense",
   }) {
   
     if (!isOpen) return null;
@@ -51,14 +52,16 @@ export default function EditModal({
               className="w-full rounded-lg border p-3"
             />
   
-            <input
-              type="text"
-              name="category"
-              value={editData.category}
-              onChange={handleChange}
-              placeholder="Category"
-              className="w-full rounded-lg border p-3"
-            />
+            {type === "expense" && (
+              <input
+                type="text"
+                name="category"
+                value={editData.category}
+                onChange={handleChange}
+                placeholder="Category"
+                className="w-full rounded-lg border p-3"
+              />
+            )}
   
             <input
               type="number"

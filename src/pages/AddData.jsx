@@ -138,7 +138,7 @@ export default function AddTransaction({ user }) {
                 required
               >
                 <option value="">-- Select Category --</option>
-                <option value="Jajan">Jajan</option>
+                <option value="Pangan">Pangan</option>
                 <option value="Transport">Transport</option>
                 <option value="Gadget">Gadget</option>
                 <option value="Olahraga">Olahraga</option>
