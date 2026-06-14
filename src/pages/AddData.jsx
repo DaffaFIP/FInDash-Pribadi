@@ -7,7 +7,7 @@ import {
 
 import { db } from "../firebase";
 
-export default function AddTransaction() {
+export default function AddTransaction({ user }) {
 
   const today = new Date()
     .toISOString()
@@ -33,13 +33,12 @@ export default function AddTransaction() {
 
     try {
       await addDoc(
-        collection(db, "transactions"),
+        collection(db, "expense"),
         {
           title: form.title,
           category: form.category,
           amount: Number(form.amount),
-
-          // convert string date to Date object
+          uid: user.uid,
           Date: new Date(form.Date),
         }
       );

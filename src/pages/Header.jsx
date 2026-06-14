@@ -4,11 +4,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   collection,
   getDocs,
+  query,
+  where,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
 
-export default function App() {
+export default function App({ user }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,9 +36,11 @@ export default function App() {
       try {
         setLoading(true);
         setError(null);
-        const querySnapshot = await getDocs(
-          collection(db, "transactions")
+        const q = query(
+          collection(db, "expense"),
+          where("uid", "==", user.uid)
         );
+        const querySnapshot = await getDocs(q);
 
         const data = querySnapshot.docs.map((doc) => {
           const firebaseData = doc.data();
@@ -60,7 +64,7 @@ export default function App() {
     };
 
     fetchTransactions();
-  }, []);
+  }, [user.uid]);
 
   // FILTER BULAN INI
   const currentMonthExpenses = useMemo(() => {

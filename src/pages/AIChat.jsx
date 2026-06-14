@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 
 export default function AIChat({ user }) {
@@ -70,8 +70,8 @@ export default function AIChat({ user }) {
         try {
             const token = await user.getIdToken();
 
-            // ambil transaksi via client SDK (sama seperti initDeployed)
-            const querySnapshot = await getDocs(collection(db, "transactions"));
+            const q = query(collection(db, "expense"), where("uid", "==", user.uid));
+            const querySnapshot = await getDocs(q);
             const transactions = querySnapshot.docs.map((doc) => {
                 const data = doc.data();
                 return {
@@ -103,7 +103,8 @@ export default function AIChat({ user }) {
     const initDeployed = async () => {
 
         try {
-            const querySnapshot = await getDocs(collection(db, "transactions"));
+            const q = query(collection(db, "expense"), where("uid", "==", user.uid));
+            const querySnapshot = await getDocs(q);
 
             const transactions = querySnapshot.docs.map((doc) => {
                 const data = doc.data();

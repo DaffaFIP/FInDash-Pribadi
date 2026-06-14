@@ -13,6 +13,8 @@ import {
 import {
   collection,
   getDocs,
+  query,
+  where,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -30,9 +32,11 @@ export default function App({ user }) {
       try {
         setLoading(true);
         setError(null);
-        const querySnapshot = await getDocs(
-          collection(db, "transactions")
+        const q = query(
+          collection(db, "expense"),
+          where("uid", "==", user.uid)
         );
+        const querySnapshot = await getDocs(q);
 
         const data = querySnapshot.docs.map((doc) => {
           const firebaseData = doc.data();
@@ -56,7 +60,7 @@ export default function App({ user }) {
     };
 
     fetchTransactions();
-  }, []);
+  }, [user.uid]);
 
 
   // FILTER DATA

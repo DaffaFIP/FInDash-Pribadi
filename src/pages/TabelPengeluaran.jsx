@@ -10,6 +10,7 @@ import {
   doc,
   query,
   orderBy,
+  where,
   updateDoc,
 } from "firebase/firestore";
 
@@ -67,7 +68,8 @@ export default function App({ user }) {
         setLoading(true);
         setError(null);
         const q = query(
-          collection(db, "transactions"),
+          collection(db, "expense"),
+          where("uid", "==", user.uid),
           orderBy("Date", "desc")
         );
 
@@ -95,7 +97,7 @@ export default function App({ user }) {
     };
 
     fetchTransactions();
-  }, []);
+  }, [user.uid]);
 
 
   // DELETE
@@ -103,7 +105,7 @@ export default function App({ user }) {
     try {
 
       await deleteDoc(
-        doc(db, "transactions", deleteId)
+        doc(db, "expense", deleteId)
       );
 
       setExpenses((prev) =>
@@ -127,7 +129,7 @@ export default function App({ user }) {
     try {
       const docRef = doc(
         db,
-        "transactions",
+        "expense",
         editData.id
       );
 
