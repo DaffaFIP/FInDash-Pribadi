@@ -138,17 +138,8 @@ export default function App({ user }) {
 
     }, [expenses, brownieFilter]);
 
-  // calculate percentage and square count for each category
   const currency = (value) => {
-
-    return new Intl.NumberFormat(
-      "en-US",
-      {
-        style: "currency",
-        currency: "IDR",
-        maximumFractionDigits: 0,
-      }
-    ).format(value);
+    return Number(value).toLocaleString("en-US");
   };
 
   // BROWNIE CHART DATA
@@ -298,7 +289,7 @@ export default function App({ user }) {
       <div className="rounded-2xl bg-white p-6 shadow">
 
         <h2 className="mb-4 text-xl font-semibold">
-          Category Distribution
+          Expense Distribution
         </h2>
 
         {loading ? (

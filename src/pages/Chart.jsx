@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   LineChart,
@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Legend,
 } from "recharts";
 
 import {
@@ -21,36 +22,51 @@ import { db } from "../firebase";
 
 export default function App({ user }) {
   const [expenses, setExpenses] = useState([]);
+  const [incomes, setIncomes] = useState([]);
   const [filter, setFilter] = useState("30days");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-
-  // FETCH FIREBASE DATA
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         setLoading(true);
         setError(null);
-        const q = query(
+
+        const expenseQuery = query(
           collection(db, "expense"),
           where("uid", "==", user.uid)
         );
-        const querySnapshot = await getDocs(q);
+        const incomeQuery = query(
+          collection(db, "income"),
+          where("uid", "==", user.uid)
+        );
 
-        const data = querySnapshot.docs.map((doc) => {
+        const [expenseSnap, incomeSnap] = await Promise.all([
+          getDocs(expenseQuery),
+          getDocs(incomeQuery),
+        ]);
+
+        const expenseData = expenseSnap.docs.map((doc) => {
           const firebaseData = doc.data();
-
           return {
             id: doc.id,
             ...firebaseData,
-
-            // convert firestore timestamp
             Date: firebaseData.Date?.toDate(),
           };
         });
 
-        setExpenses(data);
+        const incomeData = incomeSnap.docs.map((doc) => {
+          const firebaseData = doc.data();
+          return {
+            id: doc.id,
+            ...firebaseData,
+            Date: firebaseData.Date?.toDate(),
+          };
+        });
+
+        setExpenses(expenseData);
+        setIncomes(incomeData);
       } catch (error) {
         console.log(error);
         setError("Failed to load data");
@@ -62,8 +78,7 @@ export default function App({ user }) {
     fetchTransactions();
   }, [user.uid]);
 
-
-  // FILTER DATA
+  // FILTER
   const filteredExpenses = useMemo(() => {
     const toDayStart = (date) => {
       const day = new Date(date);
@@ -71,11 +86,7 @@ export default function App({ user }) {
       return day;
     };
 
-    // use real time for production
     const today = toDayStart(new Date());
-
-    // use fixed date for testing so data doesn't change daily
-    // const today = toDayStart(new Date(2026, 4, 14));
 
     const isWithinDayRange = (item, daysBack) => {
       if (!item.Date) return false;
@@ -96,40 +107,65 @@ export default function App({ user }) {
     return expenses;
   }, [expenses, filter]);
 
+  const filteredIncomes = useMemo(() => {
+    const toDayStart = (date) => {
+      const day = new Date(date);
+      day.setHours(0, 0, 0, 0);
+      return day;
+    };
 
-  // CHART DATA (TOTAL PER HARI + SORT TANGGAL)
+    const today = toDayStart(new Date());
+
+    const isWithinDayRange = (item, daysBack) => {
+      if (!item.Date) return false;
+      const itemDay = toDayStart(item.Date);
+      const rangeStart = new Date(today);
+      rangeStart.setDate(today.getDate() - daysBack);
+      return itemDay >= rangeStart && itemDay <= today;
+    };
+
+    if (filter === "7days") {
+      return incomes.filter((item) => isWithinDayRange(item, 7));
+    }
+
+    if (filter === "30days") {
+      return incomes.filter((item) => isWithinDayRange(item, 30));
+    }
+
+    return incomes;
+  }, [incomes, filter]);
+
+  // CHART DATA
   const chartData = useMemo(() => {
-
     const groupedData = {};
 
-    filteredExpenses.forEach((item) => {
+    const addAmount = (items, keyName) => {
+      items.forEach((item) => {
+        const dateLabel = item.Date?.toLocaleDateString("en-US");
+        const dateKey = new Date(item.Date);
+        dateKey.setHours(0, 0, 0, 0);
+        const key = dateKey.getTime();
 
-      // format date for display
-      const dateLabel = item.Date?.toLocaleDateString("en-US");
+        if (!groupedData[key]) {
+          groupedData[key] = {
+            date: dateLabel,
+            fullDate: dateKey,
+            expense: 0,
+            income: 0,
+          };
+        }
 
-      // format key aman untuk sorting
-      const dateKey = new Date(item.Date);
-      dateKey.setHours(0, 0, 0, 0);
+        groupedData[key][keyName] += Number(item.amount);
+      });
+    };
 
-      const key = dateKey.getTime();
-
-      if (!groupedData[key]) {
-        groupedData[key] = {
-          date: dateLabel,
-          fullDate: dateKey,
-          amount: 0,
-        };
-      }
-
-      groupedData[key].amount += Number(item.amount);
-
-    });
+    addAmount(filteredExpenses, "expense");
+    addAmount(filteredIncomes, "income");
 
     return Object.values(groupedData).sort(
       (a, b) => a.fullDate - b.fullDate
     );
-
-  }, [filteredExpenses]);
+  }, [filteredExpenses, filteredIncomes]);
 
   const totalFilteredExpense = useMemo(() => {
     return filteredExpenses.reduce(
@@ -138,22 +174,16 @@ export default function App({ user }) {
     );
   }, [filteredExpenses]);
 
-  const filterTotalLabel =
-    filter === "7days"
-      ? "Last 7 days"
-      : filter === "30days"
-        ? "Last 30 days"
-        : "All time";
+  const totalFilteredIncome = useMemo(() => {
+    return filteredIncomes.reduce(
+      (sum, item) => sum + Number(item.amount || 0),
+      0
+    );
+  }, [filteredIncomes]);
 
-  // CURRENCY
   const currency = (value) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "IDR",
-    }).format(value);
+    return Number(value).toLocaleString("en-US");
   };
-
-
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -164,10 +194,9 @@ export default function App({ user }) {
         </div>
       )}
 
-      {/* Header CHART */}
       <div className="rounded-2xl bg-white p-6 shadow">
         <h2 className="mb-4 text-xl font-semibold">
-          Expense Chart
+          Finance Chart
         </h2>
 
         {loading ? (
@@ -212,16 +241,22 @@ export default function App({ user }) {
             All
           </button>
 
-          <div className="border-l border-slate-200 pl-4">
-            <p className="text-sm text-slate-500">{filterTotalLabel}</p>
-            <p className="text-lg font-semibold text-indigo-600">
-              {currency(totalFilteredExpense)}
-            </p>
+          <div className="flex items-center gap-6 border-l border-slate-200 pl-4">
+            <div>
+              <p className="text-sm text-slate-500">Expense</p>
+              <p className="text-lg font-semibold text-indigo-600">
+                {currency(totalFilteredExpense)}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Income</p>
+              <p className="text-lg font-semibold text-green-600">
+                {currency(totalFilteredIncome)}
+              </p>
+            </div>
           </div>
         </div>
 
-
-        {/* Chart */}
         <div className="w-full h-[350px] min-h-[350px]">
           <ResponsiveContainer
             width="100%"
@@ -235,16 +270,27 @@ export default function App({ user }) {
               <YAxis />
 
               <Tooltip
-                formatter={(value) =>
-                  currency(value)
+                formatter={(value, name) =>
+                  `${name === "expense" ? "Expense" : "Income"}: ${currency(value)}`
                 }
+              />
+
+              <Legend />
+
+              <Line
+                type="monotone"
+                dataKey="expense"
+                stroke="#4f46e5"
+                strokeWidth={3}
+                name="Expense"
               />
 
               <Line
                 type="monotone"
-                dataKey="amount"
-                stroke="#4f46e5"
+                dataKey="income"
+                stroke="#10b981"
                 strokeWidth={3}
+                name="Income"
               />
             </LineChart>
           </ResponsiveContainer>

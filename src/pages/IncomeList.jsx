@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import EditModal from "./EditModal";
 import DeleteModal from "./DeleteModal";
 import SuccessModal from "./SuccessModal";
@@ -16,34 +16,23 @@ import {
 
 import { db } from "../firebase";
 
-export default function App({ user }) {
-  const [expenses, setExpenses] = useState([]);
+export default function IncomeList({ user }) {
+  const [incomes, setIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [selectedCategory, setSelectedCategory] =
-    useState("all");
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // delete modal state
   const [isDeleteOpen, setIsDeleteOpen] =
     useState(false);
 
   const [deleteId, setDeleteId] =
     useState(null);
 
-  const [form, setForm] = useState({
-    Date: "",
-    category: "",
-    amount: "",
-    title: "",
-  });
-
-  // state for edit
   const [isEditOpen, setIsEditOpen] =
     useState(false);
 
@@ -51,7 +40,6 @@ export default function App({ user }) {
     useState({
       id: "",
       title: "",
-      category: "",
       amount: "",
       Date: "",
     });
@@ -61,14 +49,13 @@ export default function App({ user }) {
   const [successMessage, setSuccessMessage] =
     useState("");
 
-  // FETCH FIREBASE DATA
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         setLoading(true);
         setError(null);
         const q = query(
-          collection(db, "expense"),
+          collection(db, "income"),
           where("uid", "==", user.uid),
           orderBy("Date", "desc")
         );
@@ -81,13 +68,11 @@ export default function App({ user }) {
           return {
             id: doc.id,
             ...firebaseData,
-
-            // convert firestore timestamp
             Date: firebaseData.Date?.toDate(),
           };
         });
 
-        setExpenses(data);
+        setIncomes(data);
       } catch (error) {
         console.log(error);
         setError("Failed to load data");
@@ -99,16 +84,13 @@ export default function App({ user }) {
     fetchTransactions();
   }, [user.uid]);
 
-
-  // DELETE
   const confirmDelete = async () => {
     try {
-
       await deleteDoc(
-        doc(db, "expense", deleteId)
+        doc(db, "income", deleteId)
       );
 
-      setExpenses((prev) =>
+      setIncomes((prev) =>
         prev.filter(
           (item) => item.id !== deleteId
         )
@@ -118,30 +100,26 @@ export default function App({ user }) {
       setDeleteId(null);
       setSuccessMessage("Data deleted successfully");
       setIsSuccessOpen(true);
-
     } catch (error) {
       console.log(error);
     }
   };
 
-  //update
   const handleUpdate = async () => {
     try {
       const docRef = doc(
         db,
-        "expense",
+        "income",
         editData.id
       );
 
       await updateDoc(docRef, {
         title: editData.title,
-        category: editData.category,
         amount: Number(editData.amount),
         Date: new Date(editData.Date),
       });
 
-      // update state local
-      setExpenses((prev) =>
+      setIncomes((prev) =>
         prev.map((item) =>
           item.id === editData.id
             ? {
@@ -160,7 +138,6 @@ export default function App({ user }) {
       setIsEditOpen(false);
       setSuccessMessage("Data updated successfully");
       setIsSuccessOpen(true);
-
     } catch (error) {
       console.log(error);
     }
@@ -169,46 +146,26 @@ export default function App({ user }) {
   const closeSuccess = () =>
     setIsSuccessOpen(false);
 
-  // CURRENCY
   const currency = (value) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "IDR",
-    }).format(value);
+    return Number(value).toLocaleString("en-US");
   };
 
-  // PAGINATION
-  const categoryOptions = useMemo(() => {
-    return [
-      "all",
-      ...new Set(
-        expenses
-          .map((item) => item.category)
-          .filter(Boolean)
-      ),
-    ];
-  }, [expenses]);
-
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter((item) => {
+  const filteredIncomes = useMemo(() => {
+    return incomes.filter((item) => {
       const titleMatch = item.title
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase());
-
-      const categoryMatch =
-        selectedCategory === "all" ||
-        item.category === selectedCategory;
 
       const dateMatch =
         (!startDate || item.Date >= new Date(startDate)) &&
         (!endDate || item.Date <= new Date(endDate + "T23:59:59"));
 
-      return titleMatch && categoryMatch && dateMatch;
+      return titleMatch && dateMatch;
     });
-  }, [expenses, searchTerm, startDate, endDate, selectedCategory]);
+  }, [incomes, searchTerm, startDate, endDate]);
 
   const totalPages = Math.ceil(
-    filteredExpenses.length / itemsPerPage
+    filteredIncomes.length / itemsPerPage
   );
 
   const startIndex =
@@ -218,7 +175,7 @@ export default function App({ user }) {
     startIndex + itemsPerPage;
 
   const currentData =
-    filteredExpenses.slice(startIndex, endIndex);
+    filteredIncomes.slice(startIndex, endIndex);
 
   const pageRange = useMemo(() => {
     const total = totalPages;
@@ -250,10 +207,9 @@ export default function App({ user }) {
         </div>
       )}
 
-      {/* TABLE */}
       <div className="rounded-lg border border-slate-200 bg-white p-6">
         <h2 className="mb-4 text-xl font-semibold">
-          Expense List
+          Income List
         </h2>
 
         {loading ? (
@@ -308,27 +264,6 @@ export default function App({ user }) {
                   />
                 </div>
               </div>
-
-              <div className="flex flex-col gap-1">
-                <span className="text-xs text-slate-400">Category</span>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    setSelectedCategory(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:min-w-[140px]"
-                >
-                  <option value="all">All categories</option>
-                  {categoryOptions
-                    .filter((c) => c !== "all")
-                    .map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                </select>
-              </div>
             </div>
 
               <button
@@ -336,7 +271,6 @@ export default function App({ user }) {
                   setSearchTerm("");
                   setStartDate("");
                   setEndDate("");
-                  setSelectedCategory("all");
                   setCurrentPage(1);
                 }}
                 className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-100 md:w-auto"
@@ -352,7 +286,6 @@ export default function App({ user }) {
               <tr>
                 <th className="p-3 text-left text-sm font-semibold">Title</th>
                 <th className="p-3 text-left text-sm font-semibold">Date</th>
-                <th className="p-3 text-left text-sm font-semibold">Category</th>
                 <th className="p-3 text-left text-sm font-semibold">Amount</th>
                 {user && <th className="p-3 text-left text-sm font-semibold">Actions</th>}
               </tr>
@@ -371,16 +304,17 @@ export default function App({ user }) {
 
                     <td className="p-3">
                       {item.Date?.toLocaleDateString(
-                        "en-US"
+                        "en-GB",
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        }
                       )}
                     </td>
 
-                    <td className="p-3">
-                      {item.category}
-                    </td>
-
-                    <td className="p-3">
-                      {currency(item.amount)}
+                    <td className="p-3 font-medium text-green-600">
+                      +{currency(item.amount)}
                     </td>
 
                     {user && (
@@ -419,7 +353,7 @@ export default function App({ user }) {
               ) : (
                 <tr>
                   <td
-                    colSpan={user ? 5 : 4}
+                    colSpan={user ? 4 : 3}
                     className="p-4 text-center text-slate-500"
                   >
                     No data found.
@@ -486,7 +420,6 @@ export default function App({ user }) {
             </div>
             )}
 
-            {/* MODAL */}
             <EditModal
               isOpen={isEditOpen}
               editData={editData}

@@ -102,10 +102,7 @@ export default function App({ user }) {
 
   // CURRENCY
   const currency = (value) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "IDR",
-    }).format(value);
+    return Number(value).toLocaleString("en-US");
   };
 
   return (

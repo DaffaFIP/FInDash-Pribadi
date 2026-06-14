@@ -1,6 +1,7 @@
 import Header from "./Header";
 import Chart from "./Chart";
-import TabelPengeluaran from "./TabelPengeluaran";
+import ExpenseList from "./ExpenseList";
+import IncomeList from "./IncomeList";
 import Brownie from "./Brownie";
 
 export default function App({ user }) {
@@ -25,7 +26,11 @@ export default function App({ user }) {
         </div>
 
         <div>
-          <TabelPengeluaran user={user} />
+          <ExpenseList user={user} />
+        </div>
+
+        <div>
+          <IncomeList user={user} />
         </div>
 
       </div>
