@@ -4,11 +4,10 @@ import React, {
   useState,
 } from "react";
 
-
-
 import {
   collection,
   getDocs,
+  onSnapshot,
   query,
   where,
 } from "firebase/firestore";
@@ -20,8 +19,7 @@ export default function App({ user }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-
+  const [masterCats, setMasterCats] = useState([]);
 
   // FILTER BROWNIE CHART
   const [
@@ -71,6 +69,21 @@ export default function App({ user }) {
     fetchTransactions();
 
   }, [user.uid]);
+
+  // FETCH MASTER CATEGORIES
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, "mastercategory"),
+      where("uid", "==", user.uid)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      const list = [];
+      snapshot.forEach((d) => list.push({ id: d.id, ...d.data() }));
+      setMasterCats(list);
+    });
+    return () => unsub();
+  }, [user]);
 
   // GENERIC FILTER FUNCTION
   const filterExpenses = (
@@ -170,10 +183,20 @@ export default function App({ user }) {
     entries.sort((a, b) => b[1] - a[1]);
     let accumulated = 0;
 
-
+    const count = entries.length;
+    const isLast = (i) => i === count - 1;
 
     return entries.map(
       ([label, amount], index) => {
+
+        if (total === 0) {
+          return {
+            label,
+            amount: 0,
+            percentage: "0.0",
+            squares: 0,
+          };
+        }
 
         const raw =
           (amount / total) * 100;
@@ -182,7 +205,7 @@ export default function App({ user }) {
 
         // last category
         // ensure total is always exactly 100
-        if (index === entries.length - 1) {
+        if (isLast(index)) {
 
           squareCount = 100 - accumulated;
 
@@ -195,12 +218,9 @@ export default function App({ user }) {
 
         return {
           label,
-
           amount,
-
           percentage:
             raw.toFixed(1),
-
           squares: squareCount,
         };
       }
@@ -208,29 +228,15 @@ export default function App({ user }) {
 
   }, [filteredBrownieExpenses]);
 
-  // // COLORS
-  // const categoryColors = {
-  //   Pangan: "bg-indigo-500",
-  //   Transport: "bg-pink-500",
-  //   Internet: "bg-emerald-500",
-  //   Gadget: "bg-cyan-500",
-  //   Buku: "bg-amber-500",
-  //   Olahraga: "bg-orange-500",
-  //   Hiburan: "bg-violet-500",
-  //   Lainnya: "bg-slate-500",
-  // };
-
-  // colors per category (adjustable based on available data)
-  const categoryColors = {
-    Pangan: "bg-[#4F46E5]",
-    Transport: "bg-[#EC4899]",
-    Internet: "bg-[#10B981]",
-    Gadget: "bg-[#06B6D4]",
-    Buku: "bg-[#F59E0B]",
-    Olahraga: "bg-[#F97316]",
-    Hiburan: "bg-[#8B5CF6]",
-    Lainnya: "bg-[#64748B]",
-  };
+  // dynamic colors from master category collection
+  const categoryColors = useMemo(() => {
+    const map = {};
+    masterCats.forEach((c) => {
+      map[c.name] = `bg-[${c.color}]`;
+    });
+    map["Lainnya"] = "bg-[#64748B]";
+    return map;
+  }, [masterCats]);
 
   // // BROWNIE SQUARES
   // const brownieSquares =

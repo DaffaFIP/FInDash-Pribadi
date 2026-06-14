@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   collection,
   addDoc,
+  query,
+  where,
+  onSnapshot,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -29,6 +32,28 @@ export default function AddTransaction({ user }) {
       [e.target.name]: e.target.value,
     });
   };
+
+  // CATEGORIES FROM FIRESTORE
+  const [categories, setCategories] = useState([]);
+  const [catLoading, setCatLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      collection(db, "mastercategory"),
+      where("uid", "==", user.uid)
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const list = [];
+      snapshot.forEach((d) => list.push({ id: d.id, ...d.data() }));
+      setCategories(list);
+      setCatLoading(false);
+    });
+
+    return () => unsub();
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -138,13 +163,15 @@ export default function AddTransaction({ user }) {
                 required
               >
                 <option value="">-- Select Category --</option>
-                <option value="Pangan">Pangan</option>
-                <option value="Transport">Transport</option>
-                <option value="Gadget">Gadget</option>
-                <option value="Olahraga">Olahraga</option>
-                <option value="Buku">Buku</option>
-                <option value="Internet">Internet</option>
-                <option value="Lainnya">Lainnya</option>
+                {catLoading ? (
+                  <option value="" disabled>Memuat...</option>
+                ) : (
+                  categories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
           )}
