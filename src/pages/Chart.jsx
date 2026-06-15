@@ -164,9 +164,13 @@ export default function App({ user }) {
     addAmount(filteredExpenses, "expense");
     addAmount(filteredIncomes, "income");
 
-    return Object.values(groupedData).sort(
-      (a, b) => a.fullDate - b.fullDate
-    );
+    return Object.values(groupedData)
+      .sort((a, b) => a.fullDate - b.fullDate)
+      .map((d) => ({
+        ...d,
+        expense: d.expense === 0 ? null : d.expense,
+        income: d.income === 0 ? null : d.income,
+      }));
   }, [filteredExpenses, filteredIncomes]);
 
   const totalFilteredExpense = useMemo(() => {
@@ -278,9 +282,7 @@ export default function App({ user }) {
               <YAxis />
 
               <Tooltip
-                formatter={(value, name) =>
-                  `${name === "expense" ? "Expense" : "Income"}: ${currency(value)}`
-                }
+                formatter={(value, name) => `${name}: ${currency(value)}`}
               />
 
               <Legend />
@@ -292,6 +294,7 @@ export default function App({ user }) {
                   stroke="#4f46e5"
                   strokeWidth={3}
                   name="Expense"
+                  connectNulls
                 />
               )}
 
@@ -302,6 +305,7 @@ export default function App({ user }) {
                   stroke="#10b981"
                   strokeWidth={3}
                   name="Income"
+                  connectNulls
                 />
               )}
             </LineChart>

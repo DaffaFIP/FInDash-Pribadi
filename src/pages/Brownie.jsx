@@ -309,24 +309,6 @@ export default function App({ user }) {
           </div>
         ) : (
         <>
-        <div className="mb-6 flex items-center gap-3">
-          <span className="text-sm font-medium text-slate-500">
-            Period
-          </span>
-          <select
-            value={brownieFilter}
-            onChange={(e) =>
-              setBrownieFilter(e.target.value)
-            }
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value="thisMonth">This Month</option>
-            <option value="7days">7 Days</option>
-            <option value="30days">30 Days</option>
-            <option value="all">All</option>
-          </select>
-        </div>
-
         <div
           className="flex flex-col items-center gap-8 lg:flex-row lg:items-start    lg:justify-center">
 
@@ -365,6 +347,29 @@ export default function App({ user }) {
           <div
             className="w-full rounded-xl border border-slate-200 bg-white divide-y divide-slate-100 lg:w-[320px]"
           >
+
+            <div className="flex items-center justify-center p-3">
+              <div className="flex w-fit rounded-lg bg-gray-100 p-1">
+                {[
+                  { value: "thisMonth", label: "Month" },
+                  { value: "7days", label: "7 Days" },
+                  { value: "30days", label: "30 Days" },
+                  { value: "all", label: "All" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setBrownieFilter(opt.value)}
+                    className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                      brownieFilter === opt.value
+                        ? "bg-indigo-500 text-white shadow-sm"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {brownieData.map(
               (item, index) => (

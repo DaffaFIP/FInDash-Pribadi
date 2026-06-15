@@ -26,11 +26,20 @@ export default function AddTransaction({ user }) {
   });
 
 
+  const formatAmount = (value) => {
+    const digits = value.replace(/\D/g, "");
+    if (!digits) return "";
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    if (name === "amount") {
+      const raw = value.replace(/\D/g, "");
+      setForm({ ...form, amount: raw });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   // CATEGORIES FROM FIRESTORE
@@ -90,12 +99,12 @@ export default function AddTransaction({ user }) {
     <div className="min-h-screen bg-slate-100 p-6">
       <div className="mx-auto max-w-xl rounded-2xl bg-white p-6 shadow">
 
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <h1 className="text-2xl font-bold">
             Add Transaction
           </h1>
 
-          <div className="flex rounded-lg bg-gray-100 p-1">
+          <div className="flex self-start rounded-lg bg-gray-100 p-1">
             <button
               type="button"
               onClick={() => {
@@ -183,9 +192,10 @@ export default function AddTransaction({ user }) {
             </label>
 
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               name="amount"
-              value={form.amount}
+              value={formatAmount(form.amount)}
               onChange={handleChange}
               className="w-full rounded-lg border p-3"
               required

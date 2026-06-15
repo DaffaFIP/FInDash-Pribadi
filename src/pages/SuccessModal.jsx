@@ -50,7 +50,7 @@ export default function SuccessModal({ isOpen, onClose, message = "Data updated 
 
       `}</style>
 
-      <div className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-black/50">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="animate-popup w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
           <div className="animate-pop-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
             <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

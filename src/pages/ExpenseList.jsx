@@ -26,6 +26,10 @@ export default function App({ user }) {
   const [selectedCategory, setSelectedCategory] =
     useState("all");
 
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [sortDirection, setSortDirection] = useState(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -203,8 +207,16 @@ export default function App({ user }) {
     });
   }, [expenses, searchTerm, startDate, endDate, selectedCategory]);
 
+  const sortedExpenses = useMemo(() => {
+    if (!sortDirection) return filteredExpenses;
+    return [...filteredExpenses].sort((a, b) => {
+      const diff = Number(a.amount) - Number(b.amount);
+      return sortDirection === "asc" ? diff : -diff;
+    });
+  }, [filteredExpenses, sortDirection]);
+
   const totalPages = Math.ceil(
-    filteredExpenses.length / itemsPerPage
+    sortedExpenses.length / itemsPerPage
   );
 
   const startIndex =
@@ -214,7 +226,7 @@ export default function App({ user }) {
     startIndex + itemsPerPage;
 
   const currentData =
-    filteredExpenses.slice(startIndex, endIndex);
+    sortedExpenses.slice(startIndex, endIndex);
 
   const pageRange = useMemo(() => {
     const total = totalPages;
@@ -252,6 +264,14 @@ export default function App({ user }) {
           Expense List
         </h2>
 
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="mb-3 flex w-full items-center justify-between rounded-lg border-2 border-dashed border-slate-300 px-4 py-3 text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition sm:hidden"
+        >
+          <span>Filters</span>
+          <span>{showFilters ? "▲" : "▼"}</span>
+        </button>
+
         {loading ? (
           <div className="space-y-3">
             <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
@@ -263,9 +283,9 @@ export default function App({ user }) {
         ) : (
           <>
 
-          <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:flex-wrap">
+          <div className={`mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3 ${showFilters ? 'block' : 'hidden'} sm:block`}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-slate-400">Search</span>
                 <input
@@ -276,7 +296,7 @@ export default function App({ user }) {
                     setCurrentPage(1);
                   }}
                   placeholder="Search title..."
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:min-w-[160px]"
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 sm:min-w-[160px]"
                 />
               </div>
 
@@ -290,7 +310,7 @@ export default function App({ user }) {
                       setStartDate(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:flex-none"
+                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 sm:flex-none"
                   />
                   <span className="text-xs text-slate-400">to</span>
                   <input
@@ -300,7 +320,7 @@ export default function App({ user }) {
                       setEndDate(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:flex-none"
+                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 sm:flex-none"
                   />
                 </div>
               </div>
@@ -313,7 +333,7 @@ export default function App({ user }) {
                     setSelectedCategory(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 md:min-w-[140px]"
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 sm:min-w-[140px]"
                 >
                   <option value="all">All categories</option>
                   {categoryOptions
@@ -335,7 +355,7 @@ export default function App({ user }) {
                   setSelectedCategory("all");
                   setCurrentPage(1);
                 }}
-                className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-100 md:w-auto"
+                className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-100 sm:w-auto"
               >
                 Reset Filters
               </button>
@@ -349,7 +369,20 @@ export default function App({ user }) {
                 <th className="p-3 text-left text-sm font-semibold">Title</th>
                 <th className="p-3 text-left text-sm font-semibold">Date</th>
                 <th className="p-3 text-left text-sm font-semibold">Category</th>
-                <th className="p-3 text-left text-sm font-semibold">Amount</th>
+                <th
+                  className="p-3 text-left text-sm font-semibold cursor-pointer select-none"
+                  onClick={() => {
+                    setSortDirection((prev) =>
+                      prev === null ? "asc" : prev === "asc" ? "desc" : null
+                    );
+                    setCurrentPage(1);
+                  }}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    Amount
+                    {sortDirection === "asc" ? " ↑" : sortDirection === "desc" ? " ↓" : ""}
+                  </span>
+                </th>
                 {user && <th className="p-3 text-left text-sm font-semibold">Actions</th>}
               </tr>
             </thead>
@@ -380,8 +413,8 @@ export default function App({ user }) {
                       {item.category}
                     </td>
 
-                    <td className="p-3">
-                      {currency(item.amount)}
+                    <td className="p-3 font-medium text-red-600">
+                      -{currency(item.amount)}
                     </td>
 
                     {user && (
@@ -432,7 +465,7 @@ export default function App({ user }) {
         </div>
 
             {totalPages > 1 && (
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-0.5 md:gap-1 md:justify-start">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-0.5 sm:gap-1 sm:justify-start">
 
               <button
                 onClick={() =>
@@ -441,21 +474,21 @@ export default function App({ user }) {
                   )
                 }
                 disabled={currentPage === 1}
-                className="rounded-lg border border-slate-300 bg-white px-1.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50 md:px-3 md:py-2 md:text-sm"
+                className="rounded-lg border border-slate-300 bg-white px-1.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
               >
                 ‹ Previous
               </button>
 
               {pageRange.map((page, i) =>
                 page === "..." ? (
-                  <span key={`ellipsis-${i}`} className="px-1 text-xs text-slate-400 md:px-2 md:text-sm">
+                  <span key={`ellipsis-${i}`} className="px-1 text-xs text-slate-400 sm:px-2 sm:text-sm">
                     ...
                   </span>
                 ) : (
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`min-w-[28px] rounded-lg border px-1 py-1 text-center text-xs md:min-w-[36px] md:px-2 md:py-2 md:text-sm ${
+                    className={`min-w-[28px] rounded-lg border px-1 py-1 text-center text-xs sm:min-w-[36px] sm:px-2 sm:py-2 sm:text-sm ${
                       currentPage === page
                         ? "border-indigo-600 bg-indigo-600 text-white"
                         : "border-slate-300 bg-white"
@@ -479,7 +512,7 @@ export default function App({ user }) {
                   currentPage === totalPages ||
                   totalPages === 0
                 }
-                className="rounded-lg border border-slate-300 bg-white px-1.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50 md:px-3 md:py-2 md:text-sm"
+                className="rounded-lg border border-slate-300 bg-white px-1.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
               >
                 Next ›
               </button>

@@ -140,7 +140,7 @@ export default function Login() {
   };
 
   return (
-      <div className="flex flex-col lg:flex-row min-h-screen items-start justify-center bg-slate-100 p-6 gap-6 pt-12">
+      <div className="flex flex-col lg:flex-row min-h-screen items-center justify-center bg-slate-100 p-6 gap-6 pt-12">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-slate-700">
