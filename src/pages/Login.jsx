@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -8,6 +8,7 @@ import {
   collection,
   query,
   where,
+  getDocs,
   onSnapshot,
   addDoc,
   deleteDoc,
@@ -18,7 +19,10 @@ import {
 import { auth, db } from "../firebase";
 import DeleteModal from "./DeleteModal";
 import EditCategory from "./EditCategory";
+import ChangePassModal from "./ChangePassModal";
 import SuccessModal from "./SuccessModal";
+import * as XLSX from "xlsx";
+import { Download, Upload } from "lucide-react";
 
 // ...existing code...
 
@@ -28,6 +32,10 @@ export default function Login() {
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isChangePwOpen, setIsChangePwOpen] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   // ...existing code...
 
@@ -67,6 +75,8 @@ export default function Login() {
     setSuccessMsg("Logout successful!");
     setShowSuccess(true);
   };
+
+
 
   // CATEGORY MASTER
   const [categories, setCategories] = useState([]);
@@ -142,9 +152,108 @@ export default function Login() {
     }
   };
 
+  const handleExport = async () => {
+    setExportLoading(true);
+    try {
+      const [expenseSnap, incomeSnap] = await Promise.all([
+        getDocs(query(collection(db, "expense"), where("uid", "==", user.uid))),
+        getDocs(query(collection(db, "income"), where("uid", "==", user.uid))),
+      ]);
+
+      const expenseData = expenseSnap.docs.map((d) => {
+        const data = d.data();
+        return {
+          Title: data.title || "",
+          Amount: Number(data.amount || 0),
+          Category: data.category || "",
+          Date: data.Date?.toDate().toLocaleDateString("en-GB") || "",
+        };
+      });
+
+      const incomeData = incomeSnap.docs.map((d) => {
+        const data = d.data();
+        return {
+          Title: data.title || "",
+          Amount: Number(data.amount || 0),
+          Date: data.Date?.toDate().toLocaleDateString("en-GB") || "",
+        };
+      });
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expenseData), "Expense");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(incomeData), "Income");
+      XLSX.writeFile(wb, "FinDash-Data.xlsx");
+    } catch (err) {
+      console.error(err);
+      setMessage("Failed to export data");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleImport = (file) => {
+    setImportLoading(true);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: "array" });
+
+        let added = 0;
+
+        const processSheet = async (sheetName, type) => {
+          const sheet = wb.Sheets[sheetName];
+          if (!sheet) return;
+          const rows = XLSX.utils.sheet_to_json(sheet);
+          for (const row of rows) {
+            const docData = {
+              title: row.Title || row.title || "",
+              amount: Number(row.Amount || row.amount || 0),
+              uid: user.uid,
+              Date: row.Date ? new Date(row.Date) : new Date(),
+            };
+            if (type === "expense") {
+              docData.category = row.Category || row.category || "";
+            }
+            await addDoc(collection(db, type), docData);
+            added++;
+          }
+        };
+
+        await Promise.all([
+          processSheet("Expense", "expense"),
+          processSheet("Income", "income"),
+        ]);
+
+        setSuccessMsg(`Import successful! ${added} records added.`);
+        setShowSuccess(true);
+      } catch (err) {
+        console.error(err);
+        setMessage("Failed to import data");
+      } finally {
+        setImportLoading(false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleDownloadTemplate = () => {
+    const expenseData = [
+      { Title: "e.g. Groceries", Amount: 50000, Category: "e.g. Pangan", Date: "2026-01-01" },
+    ];
+    const incomeData = [
+      { Title: "e.g. Salary", Amount: 1000000, Date: "2026-01-01" },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expenseData), "Expense");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(incomeData), "Income");
+    XLSX.writeFile(wb, "Import-Template.xlsx");
+  };
+
   return (
       <div className="flex flex-col lg:flex-row min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-900 p-6 gap-6 pt-12">
-      <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
+      <div className="flex flex-col gap-6 w-full max-w-sm">
+      <div className="w-full rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-slate-700 dark:text-slate-300">
             <span className="text-indigo-600">Firebase Login</span>
@@ -197,6 +306,13 @@ export default function Login() {
               ) : (
                 "Logout"
               )}
+            </button>
+
+            <button
+              onClick={() => setIsChangePwOpen(true)}
+              className="mt-2 w-full text-center text-xs text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition"
+            >
+              Change Password
             </button>
           </div>
         ) : (
@@ -284,6 +400,63 @@ export default function Login() {
             {message}
           </div>
         )}
+      </div>
+
+      {user && (
+        <div className="w-full rounded-2xl bg-white dark:bg-slate-800 p-6 shadow space-y-3">
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">
+            Data
+          </h3>
+          <button
+            onClick={handleExport}
+            disabled={exportLoading}
+            className="w-full py-3 px-4 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed shadow flex items-center justify-center gap-2"
+          >
+            {exportLoading ? (
+              <span>Exporting...</span>
+            ) : (
+              <>
+                <Download size={18} />
+                Export to Excel
+              </>
+            )}
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={(e) => {
+              if (e.target.files[0]) {
+                handleImport(e.target.files[0]);
+                e.target.value = "";
+              }
+            }}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importLoading}
+            className="w-full py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed shadow flex items-center justify-center gap-2"
+          >
+            {importLoading ? (
+              <span>Importing...</span>
+            ) : (
+              <>
+                <Upload size={18} />
+                Import from Excel
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handleDownloadTemplate}
+            className="w-full text-center text-xs text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition"
+          >
+            Download template
+          </button>
+        </div>
+      )}
       </div>
 
       {user && (
@@ -404,6 +577,17 @@ export default function Login() {
         setEditData={setEditTarget}
         onClose={() => setEditTarget(null)}
         onSave={handleSaveCat}
+      />
+
+      <ChangePassModal
+        isOpen={isChangePwOpen}
+        onClose={() => setIsChangePwOpen(false)}
+        user={auth.currentUser}
+        onSuccess={(msg) => {
+          setSuccessMsg(msg);
+          setShowSuccess(true);
+          setIsChangePwOpen(false);
+        }}
       />
 
       <DeleteModal

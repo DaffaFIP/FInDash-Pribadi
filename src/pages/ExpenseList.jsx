@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import EditModal from "./EditModal";
 import DeleteModal from "./DeleteModal";
 import SuccessModal from "./SuccessModal";
@@ -39,13 +39,6 @@ export default function App({ user }) {
 
   const [deleteId, setDeleteId] =
     useState(null);
-
-  const [form, setForm] = useState({
-    Date: "",
-    category: "",
-    amount: "",
-    title: "",
-  });
 
   // state for edit
   const [isEditOpen, setIsEditOpen] =

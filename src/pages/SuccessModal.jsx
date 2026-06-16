@@ -6,6 +6,7 @@ export default function SuccessModal({ isOpen, onClose, message = "Data updated 
 
   useEffect(() => {
     if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(100);
       return;
     }

@@ -25,7 +25,7 @@ export default function App({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("30days");
-  const [visibleCategories, setVisibleCategories] = useState({});
+  const [hiddenCategories, setHiddenCategories] = useState({});
 
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -233,15 +233,13 @@ export default function App({ user }) {
     return [...cats];
   }, [chartData]);
 
-  useEffect(() => {
-    setVisibleCategories((prev) => {
-      const next = { ...prev };
-      allCategories.forEach((cat) => {
-        if (!(cat in next)) next[cat] = true;
-      });
-      return next;
+  const visibleCategories = useMemo(() => {
+    const result = {};
+    allCategories.forEach((cat) => {
+      result[cat] = !hiddenCategories[cat];
     });
-  }, [allCategories]);
+    return result;
+  }, [allCategories, hiddenCategories]);
 
   const categoryAverages = useMemo(() => {
     const avgs = {};
@@ -347,7 +345,7 @@ export default function App({ user }) {
                 <button
                   key={cat}
                   onClick={() =>
-                    setVisibleCategories((prev) => ({
+                    setHiddenCategories((prev) => ({
                       ...prev,
                       [cat]: !prev[cat],
                     }))

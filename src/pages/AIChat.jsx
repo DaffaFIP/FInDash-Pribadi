@@ -185,6 +185,7 @@ export default function AIChat({ user }) {
             setTimeout(() => initDeployed());
         }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // --- ASK AI ---

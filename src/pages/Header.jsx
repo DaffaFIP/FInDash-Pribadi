@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 
 import {
@@ -15,12 +15,7 @@ export default function App({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [form, setForm] = useState({
-    Date: "",
-    category: "",
-    amount: "",
-    title: "",
-  });
+
 
   // NAMA BULAN
   const monthName = new Date().toLocaleDateString(

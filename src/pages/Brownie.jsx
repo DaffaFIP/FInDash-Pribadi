@@ -1,4 +1,4 @@
-import React, {
+import {
   useEffect,
   useMemo,
   useState,
@@ -93,9 +93,6 @@ export default function App({ user }) {
 
     // PUBLIC DEMO
     // const now = new Date("2026-05-19");
-
-    // REAL TIME
-    const now = new Date();
 
     const toDayStart = (date) => {
       const day = new Date(date);
@@ -372,7 +369,7 @@ export default function App({ user }) {
             </div>
 
             {brownieData.map(
-              (item, index) => (
+              (item) => (
 
                 <div
                   key={item.label}
