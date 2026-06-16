@@ -293,7 +293,7 @@ export default function App({ user }) {
         ) : (
           <>
             <div className="mb-4 flex flex-wrap items-center gap-4">
-              <div className="flex rounded-lg bg-gray-100 dark:bg-slate-700 p-1">
+              <div className="flex w-full sm:w-fit rounded-lg bg-gray-100 dark:bg-slate-700 p-1">
                 {[
                   { value: "7days", label: "7 Days" },
                   { value: "30days", label: "30 Days" },
@@ -302,7 +302,7 @@ export default function App({ user }) {
                   <button
                     key={opt.value}
                     onClick={() => setFilter(opt.value)}
-                    className={`px-3 py-1 text-sm font-medium transition ${
+                    className={`flex-1 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition ${
                       filter === opt.value
                         ? "bg-indigo-500 text-white shadow-sm"
                         : "text-gray-600 dark:text-slate-300"
@@ -342,7 +342,7 @@ export default function App({ user }) {
               </ResponsiveContainer>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-4 pt-4">
+            <div className="flex flex-nowrap justify-center gap-4 overflow-x-auto pt-4">
               {allCategories.map((cat) => (
                 <button
                   key={cat}

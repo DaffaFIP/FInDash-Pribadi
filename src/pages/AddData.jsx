@@ -106,14 +106,14 @@ export default function AddTransaction({ user }) {
             Add Transaction
           </h1>
 
-          <div className="flex self-start rounded-lg bg-gray-100 dark:bg-slate-700 p-1">
+          <div className="flex w-full sm:w-fit rounded-lg bg-gray-100 dark:bg-slate-700 p-1">
             <button
               type="button"
               onClick={() => {
                 setType("expense");
                 setForm({ ...form, category: "" });
               }}
-              className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition ${
                 type === "expense"
                   ? "bg-red-500 text-white shadow-sm"
                   : "text-gray-600 dark:text-slate-300"
@@ -128,7 +128,7 @@ export default function AddTransaction({ user }) {
                 setType("income");
                 setForm({ ...form, category: "" });
               }}
-              className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition ${
                 type === "income"
                   ? "bg-green-500 text-white shadow-sm"
                   : "text-gray-600 dark:text-slate-300"

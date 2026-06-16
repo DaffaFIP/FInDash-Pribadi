@@ -337,7 +337,7 @@ export default function App({ user }) {
         ) : (
         <>
         <div className="mb-4 flex flex-wrap items-center gap-4">
-          <div className="flex flex-row sm:flex-col w-fit rounded-lg bg-gray-100 dark:bg-slate-700 p-1">
+          <div className="flex flex-row sm:flex-col w-full sm:w-fit rounded-lg bg-gray-100 dark:bg-slate-700 p-1">
             {[
               { value: "7days", label: "7 Days" },
               { value: "30days", label: "30 Days" },
@@ -346,7 +346,7 @@ export default function App({ user }) {
               <button
                 key={opt.value}
                 onClick={() => setFilter(opt.value)}
-                className={`px-3 py-2 sm:py-0.5 text-sm sm:text-xs font-medium transition ${
+                className={`flex-1 whitespace-nowrap rounded-md px-3 py-1 sm:py-0.5 text-sm sm:text-xs font-medium transition ${
                   filter === opt.value
                     ? "bg-indigo-500 text-white shadow-sm"
                     : "text-gray-600 dark:text-slate-300"

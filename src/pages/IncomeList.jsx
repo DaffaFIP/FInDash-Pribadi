@@ -247,7 +247,6 @@ export default function IncomeList({ user }) {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-slate-400 dark:text-slate-500">Search</span>
                 <input
                   type="text"
                   value={searchTerm}
@@ -261,7 +260,6 @@ export default function IncomeList({ user }) {
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-slate-400 dark:text-slate-500">Period</span>
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
