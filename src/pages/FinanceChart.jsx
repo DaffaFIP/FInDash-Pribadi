@@ -363,10 +363,10 @@ export default function App({ user }) {
               className={`text-left transition ${showExpense ? "opacity-100" : "opacity-40"}`}
             >
               <p className="text-sm text-slate-500">Expense</p>
-              <p className="text-lg font-semibold text-indigo-600">
+              <p className="text-lg font-semibold text-red-600">
                 {currency(totalFilteredExpense)}
               </p>
-              <p className="text-xs text-indigo-400">
+              <p className="text-xs text-red-400">
                 Avg: {currency(avgExpense)}
               </p>
             </button>
@@ -409,7 +409,7 @@ export default function App({ user }) {
               {showExpense && (
                 <ReferenceLine
                   y={avgExpense}
-                  stroke="#4f46e5"
+                  stroke="#ef4444"
                   strokeDasharray="6 4"
                   strokeWidth={2}
                 />
@@ -426,7 +426,7 @@ export default function App({ user }) {
               <Line
                 type="monotone"
                 dataKey="expense"
-                stroke="#4f46e5"
+                stroke="#ef4444"
                 strokeWidth={3}
                 name="Expense"
                 connectNulls

@@ -68,37 +68,37 @@ export default function App({ user }) {
 
   // FILTER BULAN INI
   const currentMonthExpenses = useMemo(() => {
-  
+
     const now = new Date();
-  
+
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-  
+
     return expenses.filter((item) => {
-  
+
       if (!item.Date) return false;
-  
+
       const itemDate = new Date(item.Date);
-  
+
       return (
         itemDate.getMonth() === currentMonth &&
         itemDate.getFullYear() === currentYear
       );
     });
-  
+
   }, [expenses]);
-  
+
   // TOTAL BULAN INI
   const totalExpense = useMemo(() => {
-  
+
     return currentMonthExpenses.reduce(
       (sum, item) =>
         sum + item.amount,
       0
     );
-  
+
   }, [currentMonthExpenses]);
-  
+
 
   // CURRENCY
   const currency = (value) => {
@@ -106,37 +106,33 @@ export default function App({ user }) {
   };
 
   return (
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
 
-        {error && (
-          <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
-            {error}
-          </div>
+      {error && (
+        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {/* HEADER */}
+      <div className="rounded-2xl bg-white p-6 shadow">
+        <h1 className="text-3xl font-bold text-slate-800">
+          Financial Dashboard
+        </h1>
+
+        {loading ? (
+          <div className="h-7 w-48 animate-pulse rounded bg-slate-200" />
+        ) : (
+          <p className="mt-2 text-slate-500">
+
+            {monthName} Expenses :
+            {" "}
+            {currency(totalExpense)}
+          </p>
         )}
 
-        {/* HEADER */}
-        <div className="rounded-2xl bg-white p-6 shadow">
-          <h1 className="text-3xl font-bold text-slate-800">
-            Financial Dashboard
-          </h1>
-
-          <p className="mt-2 text-slate-500">
-            Daily Expense Monitor
-          </p>
-
-          <div className="mt-4">
-            {loading ? (
-              <div className="h-7 w-48 animate-pulse rounded bg-slate-200" />
-            ) : (
-              <h2 className="text-xl font-semibold text-indigo-600">
-              {monthName} Expenses :
-                {" "}
-                {currency(totalExpense)}
-              </h2>
-            )}
-          </div>
-        </div>
-
       </div>
+
+    </div>
   );
 }
