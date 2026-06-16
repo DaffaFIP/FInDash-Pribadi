@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Legend,
+  ReferenceLine,
 } from "recharts";
 
 import {
@@ -26,6 +27,7 @@ export default function App({ user }) {
   const [filter, setFilter] = useState("30days");
   const [showExpense, setShowExpense] = useState(true);
   const [showIncome, setShowIncome] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -139,11 +141,119 @@ export default function App({ user }) {
 
   // CHART DATA
   const chartData = useMemo(() => {
+    const toDayStart = (date) => {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    };
+
+    const getWeekEndingSunday = (date) => {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      const day = d.getDay();
+      if (day !== 0) d.setDate(d.getDate() + (7 - day));
+      return d;
+    };
+
+    if (filter === "30days") {
+      const today = toDayStart(new Date());
+      const rangeStart = new Date(today);
+      rangeStart.setDate(today.getDate() - 30);
+
+      // Monday of the week containing rangeStart
+      const weekStart = new Date(rangeStart);
+      const d = weekStart.getDay();
+      weekStart.setDate(weekStart.getDate() - (d === 0 ? 6 : d - 1));
+      weekStart.setHours(0, 0, 0, 0);
+
+      const weeklyData = {};
+
+      const addAmount = (items, keyName) => {
+        items.forEach((item) => {
+          if (!item.Date) return;
+          const itemDate = toDayStart(item.Date);
+          if (itemDate < weekStart || itemDate > today) return;
+
+          const sunday = getWeekEndingSunday(itemDate);
+          const key = sunday.getTime();
+
+          if (!weeklyData[key]) {
+            weeklyData[key] = {
+              date: sunday.toLocaleDateString("en-GB"),
+              fullDate: new Date(sunday),
+              expense: 0,
+              income: 0,
+            };
+          }
+          weeklyData[key][keyName] += Number(item.amount);
+        });
+      };
+
+      addAmount(expenses, "expense");
+      addAmount(incomes, "income");
+
+      // Ensure current week is included
+      const currentSunday = getWeekEndingSunday(today);
+      const currentKey = currentSunday.getTime();
+      if (!weeklyData[currentKey]) {
+        weeklyData[currentKey] = {
+          date: currentSunday.toLocaleDateString("en-GB"),
+          fullDate: new Date(currentSunday),
+          expense: 0,
+          income: 0,
+        };
+      }
+
+      return Object.values(weeklyData)
+        .sort((a, b) => a.fullDate - b.fullDate)
+        .map((d) => ({
+          ...d,
+          expense: d.expense === 0 ? null : d.expense,
+          income: d.income === 0 ? null : d.income,
+        }));
+    }
+
+    if (filter === "all") {
+      const monthlyData = {};
+
+      const addAmount = (items, keyName) => {
+        items.forEach((item) => {
+          if (!item.Date) return;
+          const d = new Date(item.Date);
+          const key = `${d.getFullYear()}-${d.getMonth()}`;
+          const monthLabel = `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+          const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+
+          if (!monthlyData[key]) {
+            monthlyData[key] = {
+              date: monthLabel,
+              fullDate: monthStart,
+              expense: 0,
+              income: 0,
+            };
+          }
+          monthlyData[key][keyName] += Number(item.amount);
+        });
+      };
+
+      addAmount(filteredExpenses, "expense");
+      addAmount(filteredIncomes, "income");
+
+      return Object.values(monthlyData)
+        .sort((a, b) => a.fullDate - b.fullDate)
+        .map((d) => ({
+          ...d,
+          expense: d.expense === 0 ? null : d.expense,
+          income: d.income === 0 ? null : d.income,
+        }));
+    }
+
+    // daily grouping for 7days
     const groupedData = {};
 
     const addAmount = (items, keyName) => {
       items.forEach((item) => {
-        const dateLabel = item.Date?.toLocaleDateString("en-US");
+        const dateLabel = item.Date?.toLocaleDateString("en-GB");
         const dateKey = new Date(item.Date);
         dateKey.setHours(0, 0, 0, 0);
         const key = dateKey.getTime();
@@ -171,7 +281,7 @@ export default function App({ user }) {
         expense: d.expense === 0 ? null : d.expense,
         income: d.income === 0 ? null : d.income,
       }));
-  }, [filteredExpenses, filteredIncomes]);
+  }, [filteredExpenses, filteredIncomes, filter, expenses, incomes]);
 
   const totalFilteredExpense = useMemo(() => {
     return filteredExpenses.reduce(
@@ -186,6 +296,16 @@ export default function App({ user }) {
       0
     );
   }, [filteredIncomes]);
+
+  const avgExpense = useMemo(() => {
+    const values = chartData.filter((d) => d.expense != null).map((d) => d.expense);
+    return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  }, [chartData]);
+
+  const avgIncome = useMemo(() => {
+    const values = chartData.filter((d) => d.income != null).map((d) => d.income);
+    return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  }, [chartData]);
 
   const currency = (value) => {
     return Number(value).toLocaleString("en-US");
@@ -217,35 +337,25 @@ export default function App({ user }) {
         ) : (
         <>
         <div className="mb-4 flex flex-wrap items-center gap-4">
-          <button
-            onClick={() => setFilter("7days")}
-            className={`rounded-lg px-4 py-2 text-sm font-medium ${filter === "7days"
-              ? "bg-indigo-600 text-white"
-              : "bg-slate-200"
-              }`}
-          >
-            7 Days
-          </button>
-
-          <button
-            onClick={() => setFilter("30days")}
-            className={`rounded-lg px-4 py-2 text-sm font-medium ${filter === "30days"
-              ? "bg-indigo-600 text-white"
-              : "bg-slate-200"
-              }`}
-          >
-            30 Days
-          </button>
-
-          <button
-            onClick={() => setFilter("all")}
-            className={`rounded-lg px-4 py-2 text-sm font-medium ${filter === "all"
-              ? "bg-indigo-600 text-white"
-              : "bg-slate-200"
-              }`}
-          >
-            All
-          </button>
+          <div className="flex flex-row sm:flex-col w-fit rounded-lg bg-gray-100 p-1">
+            {[
+              { value: "7days", label: "7 Days" },
+              { value: "30days", label: "30 Days" },
+              { value: "all", label: "All" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setFilter(opt.value)}
+                className={`px-3 py-2 sm:py-0.5 text-sm sm:text-xs font-medium transition ${
+                  filter === opt.value
+                    ? "bg-indigo-500 text-white shadow-sm"
+                    : "text-gray-600"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
 
           <div className="flex items-center gap-4 border-l border-slate-200 pl-4">
             <button
@@ -256,6 +366,9 @@ export default function App({ user }) {
               <p className="text-lg font-semibold text-indigo-600">
                 {currency(totalFilteredExpense)}
               </p>
+              <p className="text-xs text-indigo-400">
+                Avg: {currency(avgExpense)}
+              </p>
             </button>
             <button
               onClick={() => setShowIncome((prev) => !prev)}
@@ -264,6 +377,9 @@ export default function App({ user }) {
               <p className="text-sm text-slate-500">Income</p>
               <p className="text-lg font-semibold text-green-600">
                 {currency(totalFilteredIncome)}
+              </p>
+              <p className="text-xs text-green-400">
+                Avg: {currency(avgIncome)}
               </p>
             </button>
           </div>
@@ -285,29 +401,47 @@ export default function App({ user }) {
                 formatter={(value, name) => `${name}: ${currency(value)}`}
               />
 
-              <Legend />
+              <Legend onClick={(e) => {
+                if (e.dataKey === 'expense') setShowExpense(prev => !prev);
+                if (e.dataKey === 'income') setShowIncome(prev => !prev);
+              }} />
 
               {showExpense && (
-                <Line
-                  type="monotone"
-                  dataKey="expense"
+                <ReferenceLine
+                  y={avgExpense}
                   stroke="#4f46e5"
-                  strokeWidth={3}
-                  name="Expense"
-                  connectNulls
+                  strokeDasharray="6 4"
+                  strokeWidth={2}
+                />
+              )}
+              {showIncome && (
+                <ReferenceLine
+                  y={avgIncome}
+                  stroke="#10b981"
+                  strokeDasharray="6 4"
+                  strokeWidth={2}
                 />
               )}
 
-              {showIncome && (
-                <Line
-                  type="monotone"
-                  dataKey="income"
-                  stroke="#10b981"
-                  strokeWidth={3}
-                  name="Income"
-                  connectNulls
-                />
-              )}
+              <Line
+                type="monotone"
+                dataKey="expense"
+                stroke="#4f46e5"
+                strokeWidth={3}
+                name="Expense"
+                connectNulls
+                hide={!showExpense}
+              />
+
+              <Line
+                type="monotone"
+                dataKey="income"
+                stroke="#10b981"
+                strokeWidth={3}
+                name="Income"
+                connectNulls
+                hide={!showIncome}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>

@@ -1,5 +1,5 @@
 import Header from "./Header";
-import Chart from "./Chart";
+import FinanceChart from "./FinanceChart";
 import ExpenseList from "./ExpenseList";
 import IncomeList from "./IncomeList";
 import Brownie from "./Brownie";
@@ -18,7 +18,7 @@ export default function App({ user }) {
         </div>
 
         <div>
-          <Chart user={user} />
+          <FinanceChart user={user} />
         </div>
 
         <div>
