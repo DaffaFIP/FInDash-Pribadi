@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "../firebase";
+import SuccessModal from "./SuccessModal";
 
 export default function AddTransaction({ user }) {
 
@@ -45,6 +46,7 @@ export default function AddTransaction({ user }) {
   // CATEGORIES FROM FIRESTORE
   const [categories, setCategories] = useState([]);
   const [catLoading, setCatLoading] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -81,13 +83,13 @@ export default function AddTransaction({ user }) {
 
       await addDoc(collection(db, type), data);
 
-      alert("Transaction added successfully");
+      setShowSuccess(true);
 
       setForm({
         title: "",
         category: "",
         amount: "",
-        Date: "",
+        Date: today,
       });
 
     } catch (error) {
@@ -227,6 +229,12 @@ export default function AddTransaction({ user }) {
 
         </form>
       </div>
+
+      <SuccessModal
+        isOpen={showSuccess}
+        onClose={() => setShowSuccess(false)}
+        message="Transaction added successfully"
+      />
 
     </div>
 

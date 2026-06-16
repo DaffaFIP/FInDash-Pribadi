@@ -49,7 +49,8 @@ export default function Login() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      setMessage("Login successful!");
+      setSuccessMsg("Login successful!");
+      setShowSuccess(true);
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -62,7 +63,9 @@ export default function Login() {
     setIsLoading(true);
     setMessage("");
     await signOut(auth);
-    setMessage("Logout successful!");
+    setIsLoading(false);
+    setSuccessMsg("Logout successful!");
+    setShowSuccess(true);
   };
 
   // CATEGORY MASTER
@@ -284,7 +287,7 @@ export default function Login() {
       </div>
 
       {user && (
-        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6 shadow self-start">
+        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6 shadow self-cenrter">
           <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4">
             Master Category
           </h3>
