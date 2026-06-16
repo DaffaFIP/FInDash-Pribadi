@@ -253,20 +253,20 @@ export default function App({ user }) {
     <div className="mx-auto max-w-6xl space-y-6">
 
       {error && (
-        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+        <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 text-center text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
 
       {/* TABLE */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-xl font-semibold">
+      <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6">
+        <h2 className="mb-4 text-xl font-semibold dark:text-slate-100">
           Expense List
         </h2>
 
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="mb-3 flex w-full items-center justify-between rounded-lg border-2 border-dashed border-slate-300 px-4 py-3 text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition sm:hidden"
+          className="mb-3 flex w-full items-center justify-between rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 px-4 py-3 text-sm text-slate-500 dark:text-slate-400 hover:border-indigo-400 hover:text-indigo-600 transition sm:hidden"
         >
           <span>Filters</span>
           <span>{showFilters ? "▲" : "▼"}</span>
@@ -274,20 +274,20 @@ export default function App({ user }) {
 
         {loading ? (
           <div className="space-y-3">
-            <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
-            <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
-            <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
-            <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
-            <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
+            <div className="h-10 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+            <div className="h-10 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+            <div className="h-10 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+            <div className="h-10 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+            <div className="h-10 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
           </div>
         ) : (
           <>
 
-          <div className={`mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3 ${showFilters ? 'block' : 'hidden'} sm:block`}>
+          <div className={`mb-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3 ${showFilters ? 'block' : 'hidden'} sm:block`}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-slate-400">Search</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">Search</span>
                 <input
                   type="text"
                   value={searchTerm}
@@ -296,12 +296,12 @@ export default function App({ user }) {
                     setCurrentPage(1);
                   }}
                   placeholder="Search title..."
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 sm:min-w-[160px]"
+                  className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 dark:text-slate-200 sm:min-w-[160px]"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-slate-400">Period</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">Period</span>
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
@@ -310,9 +310,9 @@ export default function App({ user }) {
                       setStartDate(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 sm:flex-none"
+                    className="min-w-0 flex-1 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 dark:text-slate-200 sm:flex-none"
                   />
-                  <span className="text-xs text-slate-400">to</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">to</span>
                   <input
                     type="date"
                     value={endDate}
@@ -320,20 +320,20 @@ export default function App({ user }) {
                       setEndDate(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 sm:flex-none"
+                    className="min-w-0 flex-1 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 dark:text-slate-200 sm:flex-none"
                   />
                 </div>
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs text-slate-400">Category</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">Category</span>
                 <select
                   value={selectedCategory}
                   onChange={(e) => {
                     setSelectedCategory(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 sm:min-w-[140px]"
+                  className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-1.5 text-sm outline-none transition focus:border-indigo-500 dark:text-slate-200 sm:min-w-[140px]"
                 >
                   <option value="all">All categories</option>
                   {categoryOptions
@@ -355,7 +355,7 @@ export default function App({ user }) {
                   setSelectedCategory("all");
                   setCurrentPage(1);
                 }}
-                className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-100 sm:w-auto"
+                className="w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-1.5 text-sm text-slate-500 dark:text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-700 sm:w-auto"
               >
                 Reset Filters
               </button>
@@ -363,12 +363,12 @@ export default function App({ user }) {
             </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-slate-200">
-            <thead className="bg-slate-50 border-b-2 border-slate-300">
+            <table className="w-full border-collapse border border-slate-200 dark:border-slate-700">
+            <thead className="bg-slate-50 dark:bg-slate-700 border-b-2 border-slate-300 dark:border-slate-600">
               <tr>
-                <th className="p-3 text-left text-sm font-semibold">Title</th>
-                <th className="p-3 text-left text-sm font-semibold">Date</th>
-                <th className="p-3 text-left text-sm font-semibold">Category</th>
+                <th className="p-3 text-left text-sm font-semibold dark:text-slate-200">Title</th>
+                <th className="p-3 text-left text-sm font-semibold dark:text-slate-200">Date</th>
+                <th className="p-3 text-left text-sm font-semibold dark:text-slate-200">Category</th>
                 <th
                   className="p-3 text-left text-sm font-semibold cursor-pointer select-none"
                   onClick={() => {
@@ -383,7 +383,7 @@ export default function App({ user }) {
                     {sortDirection === "asc" ? " ↑" : sortDirection === "desc" ? " ↓" : ""}
                   </span>
                 </th>
-                {user && <th className="p-3 text-left text-sm font-semibold">Actions</th>}
+                {user && <th className="p-3 text-left text-sm font-semibold dark:text-slate-200">Actions</th>}
               </tr>
             </thead>
 
@@ -392,7 +392,7 @@ export default function App({ user }) {
                 currentData.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-b hover:bg-slate-50"
+                    className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
                   >
                     <td className="p-3">
                       {item.title}
@@ -413,7 +413,7 @@ export default function App({ user }) {
                       {item.category}
                     </td>
 
-                    <td className="p-3 font-medium text-red-600">
+                    <td className="p-3 font-medium text-red-600 dark:text-red-400">
                       -{currency(item.amount)}
                     </td>
 
@@ -454,7 +454,7 @@ export default function App({ user }) {
                 <tr>
                   <td
                     colSpan={user ? 5 : 4}
-                    className="p-4 text-center text-slate-500"
+                    className="p-4 text-center text-slate-500 dark:text-slate-400"
                   >
                     No data found.
                   </td>
@@ -474,14 +474,14 @@ export default function App({ user }) {
                   )
                 }
                 disabled={currentPage === 1}
-                className="rounded-lg border border-slate-300 bg-white px-1.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-1.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm dark:text-slate-200"
               >
                 ‹ Previous
               </button>
 
               {pageRange.map((page, i) =>
                 page === "..." ? (
-                  <span key={`ellipsis-${i}`} className="px-1 text-xs text-slate-400 sm:px-2 sm:text-sm">
+                  <span key={`ellipsis-${i}`} className="px-1 text-xs text-slate-400 dark:text-slate-500 sm:px-2 sm:text-sm">
                     ...
                   </span>
                 ) : (
@@ -491,7 +491,7 @@ export default function App({ user }) {
                     className={`min-w-[28px] rounded-lg border px-1 py-1 text-center text-xs sm:min-w-[36px] sm:px-2 sm:py-2 sm:text-sm ${
                       currentPage === page
                         ? "border-indigo-600 bg-indigo-600 text-white"
-                        : "border-slate-300 bg-white"
+                        : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-slate-200"
                     }`}
                   >
                     {page}
@@ -512,7 +512,7 @@ export default function App({ user }) {
                   currentPage === totalPages ||
                   totalPages === 0
                 }
-                className="rounded-lg border border-slate-300 bg-white px-1.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-1.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm dark:text-slate-200"
               >
                 Next ›
               </button>

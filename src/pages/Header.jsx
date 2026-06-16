@@ -109,21 +109,21 @@ export default function App({ user }) {
     <div className="mx-auto max-w-6xl space-y-6">
 
       {error && (
-        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+        <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 text-center text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
 
       {/* HEADER */}
-      <div className="rounded-2xl bg-white p-6 shadow">
-        <h1 className="text-3xl font-bold text-slate-800">
+      <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
+        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
           Financial Dashboard
         </h1>
 
         {loading ? (
-          <div className="h-7 w-48 animate-pulse rounded bg-slate-200" />
+          <div className="h-7 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
         ) : (
-          <p className="mt-2 text-slate-500">
+          <p className="mt-2 text-slate-500 dark:text-slate-400">
 
             {monthName} Expenses :
             {" "}

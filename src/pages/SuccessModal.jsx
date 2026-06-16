@@ -51,19 +51,19 @@ export default function SuccessModal({ isOpen, onClose, message = "Data updated 
       `}</style>
 
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="animate-popup w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
-          <div className="animate-pop-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+        <div className="animate-popup w-full max-w-sm rounded-2xl bg-white dark:bg-slate-800 p-6 text-center shadow-xl">
+          <div className="animate-pop-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
             <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold text-slate-800">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
             {message}
           </h2>
-          <p className="mt-1 text-sm text-slate-500">Closing automatically...</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Closing automatically...</p>
           <button
             onClick={onClose}
-            className="relative mt-4 w-full overflow-hidden rounded-lg bg-slate-100 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-200"
+            className="relative mt-4 w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-700 px-4 py-2 text-sm text-slate-600 dark:text-slate-300 transition hover:bg-slate-200 dark:hover:bg-slate-600"
           >
             <span className="relative z-10">Close</span>
             <div

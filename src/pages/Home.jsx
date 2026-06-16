@@ -10,7 +10,7 @@ export default function App({ user }) {
   return (
 
 
-    <div className="min-h-screen bg-slate-100 p-6">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 p-6">
       <div className="mx-auto max-w-6xl space-y-6">
 
 

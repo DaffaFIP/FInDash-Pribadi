@@ -140,10 +140,10 @@ export default function Login() {
   };
 
   return (
-      <div className="flex flex-col lg:flex-row min-h-screen items-center justify-center bg-slate-100 p-6 gap-6 pt-12">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow">
+      <div className="flex flex-col lg:flex-row min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-900 p-6 gap-6 pt-12">
+      <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-slate-700">
+          <h2 className="text-2xl font-bold text-slate-700 dark:text-slate-300">
             <span className="text-indigo-600">Firebase Login</span>
           </h2>
         </div>
@@ -155,8 +155,8 @@ export default function Login() {
                 {user.email?.charAt(0).toUpperCase()}
               </div>
               <div>
-                <p className="text-sm text-slate-500">Welcome back,</p>
-                <p className="text-base font-semibold text-slate-700">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Welcome back,</p>
+                <p className="text-base font-semibold text-slate-700 dark:text-slate-300">
                   {user.email}
                 </p>
               </div>
@@ -201,7 +201,7 @@ export default function Login() {
             <div className="mb-4">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-700 mb-2"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
               >
                 Email
               </label>
@@ -212,14 +212,14 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                className="w-full rounded-lg border dark:border-slate-600 p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none dark:bg-slate-700 dark:text-slate-200"
               />
             </div>
 
             <div className="mb-4">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-slate-700 mb-2"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
               >
                 Password
               </label>
@@ -230,7 +230,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                className="w-full rounded-lg border dark:border-slate-600 p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none dark:bg-slate-700 dark:text-slate-200"
               />
             </div>
 
@@ -274,8 +274,8 @@ export default function Login() {
           <div
             className={`mt-4 p-3 rounded-lg text-center font-medium ${
               message.includes("successful")
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
+                ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300"
+                : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300"
             }`}
           >
             {message}
@@ -284,50 +284,50 @@ export default function Login() {
       </div>
 
       {user && (
-        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow self-start">
-          <h3 className="text-lg font-semibold text-slate-700 mb-4">
+        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6 shadow self-start">
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4">
             Master Category
           </h3>
 
           {catLoading ? (
-            <p className="text-sm text-slate-400">Loading...</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500">Loading...</p>
           ) : categories.length === 0 ? (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-400 dark:text-slate-500">
               No categories yet.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="py-2 pr-2 text-slate-500 font-medium w-10">
+                    <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="py-2 pr-2 text-slate-500 dark:text-slate-400 font-medium w-10">
                       No
                     </th>
-                    <th className="py-2 px-2 text-slate-500 font-medium">
+                    <th className="py-2 px-2 text-slate-500 dark:text-slate-400 font-medium">
                       Category Name
                     </th>
-                    <th className="py-2 px-2 text-slate-500 font-medium">
+                    <th className="py-2 px-2 text-slate-500 dark:text-slate-400 font-medium">
                       Color
                     </th>
-                    <th className="py-2 pl-2 text-slate-500 font-medium w-16">
+                    <th className="py-2 pl-2 text-slate-500 dark:text-slate-400 font-medium w-16">
                       Action
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {[...categories].sort((a, b) => a.name.localeCompare(b.name)).map((cat, i) => (
-                    <tr key={cat.id} className="border-b border-slate-100 last:border-0">
-                      <td className="py-2 pr-2 text-slate-400">{i + 1}</td>
-                      <td className="py-2 px-2 font-medium text-slate-700">
+                    <tr key={cat.id} className="border-b border-slate-100 dark:border-slate-700 last:border-0">
+                      <td className="py-2 pr-2 text-slate-400 dark:text-slate-500">{i + 1}</td>
+                      <td className="py-2 px-2 font-medium text-slate-700 dark:text-slate-300">
                         {cat.name}
                       </td>
                       <td className="py-2 px-2">
                         <div className="flex items-center gap-2">
                           <span
-                            className="inline-block w-4 h-4 rounded-full border border-slate-200"
+                            className="inline-block w-4 h-4 rounded-full border border-slate-200 dark:border-slate-600"
                             style={{ backgroundColor: cat.color }}
                           />
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs text-slate-400 dark:text-slate-500">
                             {cat.color}
                           </span>
                         </div>
@@ -336,7 +336,7 @@ export default function Login() {
                         <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleEditCat(cat)}
-                              className="text-slate-400 hover:text-indigo-600 transition-colors"
+                              className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 transition-colors"
                               title="Edit"
                             >
                               <svg
@@ -388,7 +388,7 @@ export default function Login() {
 
           <button
             onClick={handleOpenAdd}
-            className="w-full mt-4 border-2 border-dashed border-slate-300 rounded-lg py-3 text-sm text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition"
+            className="w-full mt-4 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg py-3 text-sm text-slate-500 dark:text-slate-400 hover:border-indigo-400 hover:text-indigo-600 transition"
           >
             + Add Category
           </button>

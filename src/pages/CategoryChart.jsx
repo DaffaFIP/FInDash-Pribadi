@@ -267,33 +267,33 @@ export default function App({ user }) {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {error && (
-        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+        <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 text-center text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
 
-      <div className="rounded-2xl bg-white p-6 shadow">
-        <h2 className="mb-4 text-xl font-semibold">
+      <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
+        <h2 className="mb-4 text-xl font-semibold dark:text-slate-100">
           Category Chart
         </h2>
 
         {loading ? (
           <div className="space-y-4">
             <div className="flex gap-2">
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
             </div>
-            <div className="h-[350px] animate-pulse rounded-lg bg-slate-200" />
+            <div className="h-[350px] animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
           </div>
         ) : chartData.length === 0 ? (
-          <div className="flex h-full items-center justify-center py-20 text-sm text-slate-400">
+          <div className="flex h-full items-center justify-center py-20 text-sm text-slate-400 dark:text-slate-500">
             No data available for selected filter
           </div>
         ) : (
           <>
             <div className="mb-4 flex flex-wrap items-center gap-4">
-              <div className="flex rounded-lg bg-gray-100 p-1">
+              <div className="flex rounded-lg bg-gray-100 dark:bg-slate-700 p-1">
                 {[
                   { value: "7days", label: "7 Days" },
                   { value: "30days", label: "30 Days" },
@@ -305,7 +305,7 @@ export default function App({ user }) {
                     className={`px-3 py-1 text-sm font-medium transition ${
                       filter === opt.value
                         ? "bg-indigo-500 text-white shadow-sm"
-                        : "text-gray-600"
+                        : "text-gray-600 dark:text-slate-300"
                     }`}
                   >
                     {opt.label}
@@ -364,7 +364,7 @@ export default function App({ user }) {
                   >
                     {cat}
                   </p>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
                     avg {currency(categoryAverages[cat] || 0)}
                   </p>
                 </button>

@@ -283,7 +283,7 @@ export default function App({ user }) {
     <div className="mx-auto max-w-6xl space-y-6">
 
       {error && (
-        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+        <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 text-center text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
@@ -292,20 +292,20 @@ export default function App({ user }) {
       {/* BROWNIE CHART */}
       {/* ========================= */}
 
-      <div className="rounded-2xl bg-white p-6 shadow">
+      <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
 
-        <h2 className="mb-4 text-xl font-semibold">
+        <h2 className="mb-4 text-xl font-semibold dark:text-slate-100">
           Expense Distribution
         </h2>
 
         {loading ? (
           <div className="space-y-4">
             <div className="flex gap-2">
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
             </div>
-            <div className="h-64 animate-pulse rounded-lg bg-slate-200" />
+            <div className="h-64 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
           </div>
         ) : (
         <>
@@ -313,10 +313,10 @@ export default function App({ user }) {
           className="flex flex-col items-center gap-8 lg:flex-row lg:items-start    lg:justify-center">
 
           {/* GRID */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-4">
 
             <div
-              className=" grid grid-cols-10 gap-[2px] bg-white p-[2px] rounded-sm"
+              className=" grid grid-cols-10 gap-[2px] bg-white dark:bg-slate-800 p-[2px] rounded-sm"
             >
 
               {brownieSquares.map(
@@ -345,11 +345,11 @@ export default function App({ user }) {
 
           {/* LEGEND */}
           <div
-            className="w-full rounded-xl border border-slate-200 bg-white divide-y divide-slate-100 lg:w-[320px]"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700 lg:w-[320px]"
           >
 
             <div className="flex items-center justify-center p-3">
-              <div className="flex w-fit rounded-lg bg-gray-100 p-1">
+              <div className="flex w-fit rounded-lg bg-gray-100 dark:bg-slate-700 p-1">
                 {[
                   { value: "thisMonth", label: "Month" },
                   { value: "7days", label: "7 Days" },
@@ -362,7 +362,7 @@ export default function App({ user }) {
                     className={`rounded-md px-4 py-2 text-sm font-medium transition ${
                       brownieFilter === opt.value
                         ? "bg-indigo-500 text-white shadow-sm"
-                        : "text-gray-600"
+                        : "text-gray-600 dark:text-slate-300"
                     }`}
                   >
                     {opt.label}
@@ -406,7 +406,7 @@ export default function App({ user }) {
                       {item.percentage}%
                     </p>
 
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                       {currency(item.amount)}
                     </p>
 

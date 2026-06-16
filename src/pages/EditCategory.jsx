@@ -25,8 +25,8 @@ export default function EditCategory({ isOpen, editData, setEditData, onClose, o
       `}</style>
 
       <div className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-black/50">
-        <div className="animate-popup w-full max-w-md rounded-2xl bg-white p-6">
-          <h2 className="mb-4 text-xl font-semibold text-slate-800">
+        <div className="animate-popup w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6">
+          <h2 className="mb-4 text-xl font-semibold text-slate-800 dark:text-slate-100">
             {editData.id ? "Edit Category" : "Add Category"}
           </h2>
 
@@ -37,7 +37,7 @@ export default function EditCategory({ isOpen, editData, setEditData, onClose, o
               value={editData.name}
               onChange={handleChange}
               placeholder="Category name"
-              className="w-full rounded-lg border p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+              className="w-full rounded-lg border dark:border-slate-600 p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none dark:bg-slate-700 dark:text-slate-200"
             />
 
             <div className="flex items-center gap-3">
@@ -46,7 +46,7 @@ export default function EditCategory({ isOpen, editData, setEditData, onClose, o
                 name="color"
                 value={editData.color}
                 onChange={handleChange}
-                className="w-10 h-10 rounded cursor-pointer border shrink-0"
+                className="w-10 h-10 rounded cursor-pointer border dark:border-slate-600 shrink-0"
               />
               <input
                 type="text"
@@ -54,14 +54,14 @@ export default function EditCategory({ isOpen, editData, setEditData, onClose, o
                 value={editData.color}
                 onChange={handleChange}
                 placeholder="#06B6D4"
-                className="w-full rounded-lg border p-3 font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                className="w-full rounded-lg border dark:border-slate-600 p-3 font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none dark:bg-slate-700 dark:text-slate-200"
               />
             </div>
 
             <div className="flex justify-end gap-2">
               <button
                 onClick={onClose}
-                className="rounded-lg bg-slate-200 px-4 py-2 hover:bg-slate-300"
+                className="rounded-lg bg-slate-200 dark:bg-slate-600 dark:text-slate-200 px-4 py-2 hover:bg-slate-300 dark:hover:bg-slate-500"
               >
                 Cancel
               </button>

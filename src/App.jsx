@@ -72,23 +72,23 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="flex flex-col items-center gap-5">
 
           {/* spinner */}
           <div className="relative">
-            <div className="h-12 w-12 rounded-full border-4 border-slate-200"></div>
+            <div className="h-12 w-12 rounded-full border-4 border-slate-200 dark:border-slate-700"></div>
 
-            <div className="absolute inset-0 h-12 w-12 animate-spin rounded-full border-4 border-transparent border-t-slate-700"></div>
+            <div className="absolute inset-0 h-12 w-12 animate-spin rounded-full border-4 border-transparent border-t-slate-700 dark:border-t-slate-300"></div>
           </div>
 
           {/* text */}
           <div className="text-center">
-            <p className="text-sm font-medium text-slate-700">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Loading application
             </p>
 
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Please wait a moment...
             </p>
           </div>
@@ -108,8 +108,8 @@ export default function App() {
         className={`
   sticky top-0 z-50
   border-b
-  bg-white/80
-  backdrop-blur
+  bg-white/80 dark:bg-slate-900/80
+  backdrop-blur dark:backdrop-blur
   transition-transform
   duration-300
   ${showNavbar
@@ -133,23 +133,23 @@ export default function App() {
 
             <Link
               to="/home"
-              className="text-sm font-medium text-slate-700 transition hover:text-indigo-600 sm:text-base"
+              className="text-sm font-medium text-slate-700 dark:text-slate-300 transition hover:text-indigo-600 sm:text-base"
             >
               Home
             </Link>
 
             <Link
               to="/adddata"
-              className="text-sm font-medium text-slate-700 transition hover:text-indigo-600 sm:text-base"
+              className="text-sm font-medium text-slate-700 dark:text-slate-300 transition hover:text-indigo-600 sm:text-base"
             >
               Add Data
             </Link>
 
-            <Link to="/ai" className="text-sm font-medium text-slate-700 transition hover:text-indigo-600 sm:text-base" > AI Assistant </Link>
+            <Link to="/ai" className="text-sm font-medium text-slate-700 dark:text-slate-300 transition hover:text-indigo-600 sm:text-base" > AI Assistant </Link>
 
             <Link
               to="/login"
-              className="max-w-[140px] truncate rounded-full bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-200 sm:max-w-none sm:px-4 sm:text-sm"
+              className="max-w-[140px] truncate rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 transition hover:bg-slate-200 dark:hover:bg-slate-700 sm:max-w-none sm:px-4 sm:text-sm"
             >
               {user ? user.email : "Login"}
             </Link>
@@ -206,7 +206,7 @@ export default function App() {
         </ErrorBoundary>
       </main>
 
-      <div className="border-t py-4 text-center text-sm text-slate-500">
+      <div className="border-t dark:border-slate-700 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
         <a
           href="https://daffafip.my.id"
         >

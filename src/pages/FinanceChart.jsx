@@ -315,29 +315,29 @@ export default function App({ user }) {
     <div className="mx-auto max-w-6xl space-y-6">
 
       {error && (
-        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600">
+        <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 text-center text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
 
-      <div className="rounded-2xl bg-white p-6 shadow">
-        <h2 className="mb-4 text-xl font-semibold">
+      <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
+        <h2 className="mb-4 text-xl font-semibold dark:text-slate-100">
           Finance Chart
         </h2>
 
         {loading ? (
           <div className="space-y-4">
             <div className="flex gap-2">
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
-              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+              <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
             </div>
-            <div className="h-[350px] animate-pulse rounded-lg bg-slate-200" />
+            <div className="h-[350px] animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
           </div>
         ) : (
         <>
         <div className="mb-4 flex flex-wrap items-center gap-4">
-          <div className="flex flex-row sm:flex-col w-fit rounded-lg bg-gray-100 p-1">
+          <div className="flex flex-row sm:flex-col w-fit rounded-lg bg-gray-100 dark:bg-slate-700 p-1">
             {[
               { value: "7days", label: "7 Days" },
               { value: "30days", label: "30 Days" },
@@ -349,7 +349,7 @@ export default function App({ user }) {
                 className={`px-3 py-2 sm:py-0.5 text-sm sm:text-xs font-medium transition ${
                   filter === opt.value
                     ? "bg-indigo-500 text-white shadow-sm"
-                    : "text-gray-600"
+                    : "text-gray-600 dark:text-slate-300"
                 }`}
               >
                 {opt.label}
@@ -357,13 +357,13 @@ export default function App({ user }) {
             ))}
           </div>
 
-          <div className="flex items-center gap-4 border-l border-slate-200 pl-4">
+          <div className="flex items-center gap-4 border-l border-slate-200 dark:border-slate-700 pl-4">
             <button
               onClick={() => setShowExpense((prev) => !prev)}
               className={`text-left transition ${showExpense ? "opacity-100" : "opacity-40"}`}
             >
-              <p className="text-sm text-slate-500">Expense</p>
-              <p className="text-lg font-semibold text-red-600">
+              <p className="text-sm text-slate-500 dark:text-slate-400">Expense</p>
+              <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 {currency(totalFilteredExpense)}
               </p>
               <p className="text-xs text-red-400">
@@ -374,8 +374,8 @@ export default function App({ user }) {
               onClick={() => setShowIncome((prev) => !prev)}
               className={`text-left transition ${showIncome ? "opacity-100" : "opacity-40"}`}
             >
-              <p className="text-sm text-slate-500">Income</p>
-              <p className="text-lg font-semibold text-green-600">
+              <p className="text-sm text-slate-500 dark:text-slate-400">Income</p>
+              <p className="text-lg font-semibold text-green-600 dark:text-green-400">
                 {currency(totalFilteredIncome)}
               </p>
               <p className="text-xs text-green-400">

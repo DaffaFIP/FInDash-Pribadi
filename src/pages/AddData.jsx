@@ -96,15 +96,15 @@ export default function AddTransaction({ user }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
-      <div className="mx-auto max-w-xl rounded-2xl bg-white p-6 shadow">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 p-6">
+      <div className="mx-auto max-w-xl rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
 
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold dark:text-slate-100">
             Add Transaction
           </h1>
 
-          <div className="flex self-start rounded-lg bg-gray-100 p-1">
+          <div className="flex self-start rounded-lg bg-gray-100 dark:bg-slate-700 p-1">
             <button
               type="button"
               onClick={() => {
@@ -114,7 +114,7 @@ export default function AddTransaction({ user }) {
               className={`rounded-md px-4 py-2 text-sm font-medium transition ${
                 type === "expense"
                   ? "bg-red-500 text-white shadow-sm"
-                  : "text-gray-600"
+                  : "text-gray-600 dark:text-slate-300"
               }`}
             >
               Expense
@@ -129,7 +129,7 @@ export default function AddTransaction({ user }) {
               className={`rounded-md px-4 py-2 text-sm font-medium transition ${
                 type === "income"
                   ? "bg-green-500 text-white shadow-sm"
-                  : "text-gray-600"
+                  : "text-gray-600 dark:text-slate-300"
               }`}
             >
               Income
@@ -144,7 +144,7 @@ export default function AddTransaction({ user }) {
 
           {/* TITLE */}
           <div>
-            <label className="mb-1 block">
+            <label className="mb-1 block dark:text-slate-300">
               Title
             </label>
 
@@ -153,14 +153,14 @@ export default function AddTransaction({ user }) {
               name="title"
               value={form.title}
               onChange={handleChange}
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border dark:border-slate-600 p-3 dark:bg-slate-700 dark:text-slate-200"
               required
             />
           </div>
 
           {type === "expense" && (
             <div>
-              <label className="mb-1 block">
+              <label className="mb-1 block dark:text-slate-300">
                 Category
               </label>
 
@@ -168,7 +168,7 @@ export default function AddTransaction({ user }) {
                 name="category"
                 value={form.category}
                 onChange={handleChange}
-                className="w-full rounded-lg border p-3"
+                className="w-full rounded-lg border dark:border-slate-600 p-3 dark:bg-slate-700 dark:text-slate-200"
                 required
               >
                 <option value="">-- Select Category --</option>
@@ -187,7 +187,7 @@ export default function AddTransaction({ user }) {
 
           {/* AMOUNT */}
           <div>
-            <label className="mb-1 block">
+            <label className="mb-1 block dark:text-slate-300">
               Amount
             </label>
 
@@ -197,14 +197,14 @@ export default function AddTransaction({ user }) {
               name="amount"
               value={formatAmount(form.amount)}
               onChange={handleChange}
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border dark:border-slate-600 p-3 dark:bg-slate-700 dark:text-slate-200"
               required
             />
           </div>
 
           {/* DATE */}
           <div>
-            <label className="mb-1 block">
+            <label className="mb-1 block dark:text-slate-300">
               Date
             </label>
 
@@ -213,7 +213,7 @@ export default function AddTransaction({ user }) {
               name="Date"
               value={form.Date}
               onChange={handleChange}
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border dark:border-slate-600 p-3 dark:bg-slate-700 dark:text-slate-200"
               required
             />
           </div>
