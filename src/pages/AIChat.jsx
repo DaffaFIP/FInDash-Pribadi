@@ -17,6 +17,9 @@ export default function AIChat({ user }) {
     const [providerLoading, setProviderLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [memoryReady, setMemoryReady] = useState(false);
+    const [streamMode, setStreamMode] = useState(null); // null | "thinking" | "dots"
+    const [liveReasoning, setLiveReasoning] = useState("");
+    const [liveContent, setLiveContent] = useState("");
     const initialized = useRef(false);
     const chatEndRef = useRef(null);
     const systemPromptRef = useRef(null);
@@ -27,7 +30,7 @@ export default function AIChat({ user }) {
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [messages, liveReasoning, liveContent]);
 
     // --- LOCAL MODE: fetch & switch provider via Express server ---
     const fetchProvider = async () => {
@@ -188,7 +191,7 @@ export default function AIChat({ user }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // --- ASK AI ---
+    // --- ASK AI (streaming) ---
     const askAI = async () => {
 
         if (!question || loading) return;
@@ -196,50 +199,108 @@ export default function AIChat({ user }) {
 
         const userQuestion = question;
         setQuestion("");
+        setStreamMode(null);
+        setLiveReasoning("");
+        setLiveContent("");
 
         setMessages((prev) => [...prev, { role: "user", content: userQuestion }]);
         setLoading(true);
 
-        try {
-            let answer;
+        let finalAnswer = "";
+        let localReasoning = "";
+        let mode = null; // null | "thinking" | "dots"
 
+        const streamUrl = isLocal ? API_URL + "/ask-ai" : "/api/ask";
+
+        const buildBody = () => {
+            if (isLocal) {
+                return { question: userQuestion };
+            }
+            return {
+                messages: [
+                    { role: "system", content: systemPromptRef.current },
+                    ...messages,
+                    { role: "user", content: userQuestion },
+                ],
+            };
+        };
+
+        const buildHeaders = async () => {
+            const headers = { "Content-Type": "application/json" };
             if (isLocal) {
                 const token = await user.getIdToken();
-                const res = await fetch(API_URL + "/ask-ai", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ question: userQuestion }),
-                });
-                const data = await res.json();
-                answer = data.answer;
-            } else {
-                const res = await fetch("/api/ask", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        messages: [
-                            { role: "system", content: systemPromptRef.current },
-                            ...messages,
-                            { role: "user", content: userQuestion },
-                        ],
-                    }),
-                });
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+            return headers;
+        };
 
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || `HTTP ${res.status}`);
-                }
+        try {
+            const res = await fetch(streamUrl, {
+                method: "POST",
+                headers: await buildHeaders(),
+                body: JSON.stringify(buildBody()),
+            });
 
-                const data = await res.json();
-                answer = data.answer;
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `HTTP ${res.status}`);
             }
 
-            if (!answer) throw new Error("Empty answer");
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
 
-            setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
+            const processLine = (line) => {
+                const trimmed = line.trim();
+                if (!trimmed || !trimmed.startsWith("data: ")) return;
+                const payload = trimmed.slice(6);
+                try {
+                    const data = JSON.parse(payload);
+
+                    if (data.type === "reasoning") {
+                        if (!mode) {
+                            mode = "thinking";
+                            setStreamMode("thinking");
+                        }
+                        localReasoning += data.text;
+                        setLiveReasoning((prev) => prev + data.text);
+                    } else if (data.type === "content") {
+                        if (!mode) {
+                            mode = "dots";
+                            setStreamMode("dots");
+                        }
+                        if (mode === "thinking") {
+                            setLiveContent((prev) => prev + data.text);
+                        }
+                        finalAnswer += data.text;
+                    } else if (data.type === "done") {
+                        finalAnswer = data.content || finalAnswer;
+                    }
+                } catch { /* skip malformed JSON */ }
+            };
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    processLine(line);
+                }
+            }
+
+            // process remaining buffer
+            if (buffer.trim()) processLine(buffer);
+
+            if (!finalAnswer) throw new Error("Empty answer");
+
+            setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: finalAnswer, reasoning: localReasoning || null },
+            ]);
 
         } catch (err) {
             console.log(err);
@@ -249,6 +310,9 @@ export default function AIChat({ user }) {
             ]);
         } finally {
             setLoading(false);
+            setStreamMode(null);
+            setLiveReasoning("");
+            setLiveContent("");
         }
     };
 
@@ -330,17 +394,29 @@ export default function AIChat({ user }) {
                                         : "border dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200"
                                 }`}
                             >
-                                {msg.role === "user" ? (
-                                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
-                                ) : (
-                                    <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
-                                )}
+            {msg.role === "user" ? (
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
+            ) : (
+                <>
+                    {msg.reasoning && (
+                        <details className="mb-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 p-2">
+                            <summary className="cursor-pointer text-xs font-semibold text-slate-500 dark:text-slate-400 select-none">
+                                Thinking Process
+                            </summary>
+                            <div className="mt-2 text-sm italic text-slate-600 dark:text-slate-400">
+                                <Markdown remarkPlugins={[remarkGfm]}>{msg.reasoning}</Markdown>
+                            </div>
+                        </details>
+                    )}
+                    <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
+                </>
+            )}
                             </div>
                         </div>
                     ))
                 )}
 
-                {loading && (
+                {loading && streamMode !== "thinking" && (
                     <div className="flex justify-start">
                         <div className="max-w-[80%] rounded-2xl border dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3">
                             <div className="flex items-center gap-1.5">
@@ -348,6 +424,31 @@ export default function AIChat({ user }) {
                                 <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: "150ms" }}></span>
                                 <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: "300ms" }}></span>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {loading && streamMode === "thinking" && (
+                    <div className="flex justify-start">
+                        <div className="max-w-[80%] rounded-2xl border dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3">
+                            {liveReasoning && (
+                                <details open className="mb-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 p-2">
+                                    <summary className="cursor-pointer text-xs font-semibold text-slate-500 dark:text-slate-400 select-none">
+                                        Thinking Process
+                                    </summary>
+                                    <div className="mt-2 text-sm italic text-slate-600 dark:text-slate-400">
+                                        <Markdown remarkPlugins={[remarkGfm]}>{liveReasoning}</Markdown>
+                                    </div>
+                                </details>
+                            )}
+                            {liveContent && (
+                                <div className="markdown">
+                                    <Markdown remarkPlugins={[remarkGfm]}>{liveContent}</Markdown>
+                                </div>
+                            )}
+                            {!liveReasoning && !liveContent && (
+                                <span className="text-sm text-slate-400">Thinking...</span>
+                            )}
                         </div>
                     </div>
                 )}

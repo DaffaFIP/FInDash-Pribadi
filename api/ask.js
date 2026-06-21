@@ -28,6 +28,7 @@ module.exports = async function handler(req, res) {
             body: JSON.stringify({
                 model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
                 messages,
+                stream: true,
             }),
         });
 
@@ -37,12 +38,83 @@ module.exports = async function handler(req, res) {
             return res.status(502).json({ error: `OpenRouter API error (${response.status})` });
         }
 
-        const data = await response.json();
-        const answer = data.choices?.[0]?.message?.content || "Sorry, no answer available.";
-        return res.json({ answer });
+        // SSE headers
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
+        res.setHeader("X-Accel-Buffering", "no");
+
+        let fullContent = "";
+        let fullReasoning = "";
+        let buffer = "";
+        let streamEnded = false;
+
+        const sendEvent = (data) => {
+            if (!streamEnded) res.write(`data: ${JSON.stringify(data)}\n\n`);
+        };
+
+        const finishStream = () => {
+            if (streamEnded) return;
+            streamEnded = true;
+            sendEvent({ type: "done", content: fullContent, reasoning: fullReasoning || null });
+            res.end();
+        };
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        const pump = async () => {
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split("\n");
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (!trimmed || !trimmed.startsWith("data: ")) continue;
+                        const payload = trimmed.slice(6);
+                        if (payload === "[DONE]") {
+                            finishStream();
+                            return;
+                        }
+                        try {
+                            const parsed = JSON.parse(payload);
+                            const delta = parsed.choices?.[0]?.delta || {};
+                            if (delta.reasoning) {
+                                fullReasoning += delta.reasoning;
+                                sendEvent({ type: "reasoning", text: delta.reasoning });
+                            }
+                            if (delta.content) {
+                                fullContent += delta.content;
+                                sendEvent({ type: "content", text: delta.content });
+                            }
+                        } catch { /* skip */ }
+                    }
+                }
+
+                if (fullContent || fullReasoning) finishStream();
+                else {
+                    sendEvent({ type: "done", content: "Sorry, no answer available.", reasoning: null });
+                    res.end();
+                }
+            } catch (err) {
+                console.error("Stream error:", err.message);
+                sendEvent({ type: "done", content: "AI stream error", reasoning: null });
+                res.end();
+            }
+        };
+
+        pump();
 
     } catch (err) {
         console.error("ask-ai error:", err.message, err.stack);
-        return res.status(500).json({ error: err.message || "AI Error" });
+        try {
+            res.write(`data: ${JSON.stringify({ type: "done", content: err.message || "AI Error", reasoning: null })}\n\n`);
+            res.end();
+        } catch { /* ignore */ }
     }
 };

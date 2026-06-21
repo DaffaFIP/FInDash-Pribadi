@@ -130,7 +130,7 @@ app.post("/init-ai", async (req, res) => {
 });
 
 
-// ASK AI
+// ASK AI — streaming
 
 app.post("/ask-ai", async (req, res) => {
 
@@ -144,92 +144,179 @@ app.post("/ask-ai", async (req, res) => {
 
         const uid = req.user.uid;
 
-        // cek apakah AI sudah init
         if (!userMemories.has(uid)) {
-
-            return res.status(400).json({
-                error: "AI not initialized"
-            });
-
+            return res.status(400).json({ error: "AI not initialized" });
         }
 
         const memory = userMemories.get(uid);
-
         console.log("Question from", uid + ":", question);
 
-        // tambahkan pertanyaan user ke memory
-        memory.push({
-            role: "user",
-            content: question
-        });
+        memory.push({ role: "user", content: question });
 
-        // kirim ke AI sesuai provider
-        let aiMessage;
+        // SSE headers
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
+        res.setHeader("X-Accel-Buffering", "no");
+
+        let fullContent = "";
+        let fullReasoning = "";
+        let streamEnded = false;
+
+        const sendEvent = (data) => {
+            if (streamEnded) return;
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+        };
+
+        const finishStream = () => {
+            if (streamEnded) return;
+            streamEnded = true;
+            sendEvent({ type: "done", content: fullContent, reasoning: fullReasoning || null });
+            res.end();
+
+            // save to memory (tanpa reasoning)
+            memory.push({ role: "assistant", content: fullContent });
+            while (memory.length > MAX_CONVERSATIONS * 2 + 1) {
+                memory.splice(1, 2);
+            }
+        };
 
         if (aiProvider === "openrouter") {
             const apiKey = process.env.OPENROUTER_API_KEY;
             if (!apiKey || apiKey === "sk-or-v1-your-key-here") {
-                return res.status(400).json({ error: "OPENROUTER_API_KEY not set in server/.env" });
+                sendEvent({ type: "done", content: "OPENROUTER_API_KEY not set in server/.env", reasoning: null });
+                return res.end();
             }
 
-            const openrouterRes = await axios.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                {
+            const openrouterRes = await axios({
+                method: "post",
+                url: "https://openrouter.ai/api/v1/chat/completions",
+                data: {
                     model: process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free",
                     messages: memory,
+                    stream: true,
                 },
-                {
-                    headers: {
-                        "Authorization": `Bearer ${apiKey}`,
-                        "Content-Type": "application/json",
-                    },
-                    timeout: 300000,
-                }
-            );
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json",
+                },
+                responseType: "stream",
+                timeout: 300000,
+            });
 
-            aiMessage = openrouterRes.data.choices?.[0]?.message?.content || "Sorry, no answer available.";
+            let buffer = "";
+
+            openrouterRes.data.on("data", (chunk) => {
+                buffer += chunk.toString();
+                const lines = buffer.split("\n");
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed || !trimmed.startsWith("data: ")) continue;
+                    const payload = trimmed.slice(6);
+                    if (payload === "[DONE]") {
+                        finishStream();
+                        return;
+                    }
+                    try {
+                        const parsed = JSON.parse(payload);
+                        const delta = parsed.choices?.[0]?.delta || {};
+                        if (delta.reasoning) {
+                            fullReasoning += delta.reasoning;
+                            sendEvent({ type: "reasoning", text: delta.reasoning });
+                        }
+                        if (delta.content) {
+                            fullContent += delta.content;
+                            sendEvent({ type: "content", text: delta.content });
+                        }
+                    } catch {
+                        // skip malformed lines
+                    }
+                }
+            });
+
+            openrouterRes.data.on("end", () => {
+                if (fullContent || fullReasoning) finishStream();
+                else {
+                    sendEvent({ type: "done", content: "Sorry, no answer available.", reasoning: null });
+                    res.end();
+                }
+            });
+
+            openrouterRes.data.on("error", (err) => {
+                console.log(err);
+                sendEvent({ type: "done", content: "AI stream error", reasoning: null });
+                res.end();
+            });
+
         } else {
             // default: ollama
-            const ollamaRes = await axios.post(
-                "http://localhost:11434/api/chat",
-                {
+            const ollamaRes = await axios({
+                method: "post",
+                url: "http://localhost:11434/api/chat",
+                data: {
                     model: process.env.OLLAMA_MODEL || "gemma4:e2b",
                     messages: memory,
-                    stream: false,
+                    stream: true,
                 },
-                {
-                    timeout: 600000,
+                responseType: "stream",
+                timeout: 600000,
+            });
+
+            let buffer = "";
+
+            ollamaRes.data.on("data", (chunk) => {
+                buffer += chunk.toString();
+                const lines = buffer.split("\n");
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed) continue;
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        const msg = parsed.message || {};
+                        if (msg.reasoning_content) {
+                            fullReasoning += msg.reasoning_content;
+                            sendEvent({ type: "reasoning", text: msg.reasoning_content });
+                        }
+                        if (msg.content) {
+                            fullContent += msg.content;
+                            sendEvent({ type: "content", text: msg.content });
+                        }
+                        if (parsed.done) {
+                            finishStream();
+                            return;
+                        }
+                    } catch {
+                        // skip
+                    }
                 }
-            );
+            });
 
-            aiMessage = ollamaRes.data.message?.content || "Sorry, no answer available.";
+            ollamaRes.data.on("end", () => {
+                if (fullContent || fullReasoning) finishStream();
+                else {
+                    sendEvent({ type: "done", content: "Sorry, no answer available.", reasoning: null });
+                    res.end();
+                }
+            });
+
+            ollamaRes.data.on("error", (err) => {
+                console.log(err);
+                sendEvent({ type: "done", content: "AI stream error", reasoning: null });
+                res.end();
+            });
         }
-
-        // save AI answer to memory
-        memory.push({
-            role: "assistant",
-            content: aiMessage
-        });
-
-        // batasi memory per user — hapus percakapan tertua jika melebihi batas
-        // system prompt di index 0, percakapan dari index 1
-        while (memory.length > MAX_CONVERSATIONS * 2 + 1) {
-            // hapus 2 pesan tertua (user + assistant)
-            memory.splice(1, 2);
-        }
-
-        // kirim ke frontend
-        res.json({
-            answer: aiMessage
-        });
 
     } catch (err) {
 
         console.log(err);
-
-        res.status(500).json({
-            error: "AI Error"
-        });
+        try {
+            res.write(`data: ${JSON.stringify({ type: "done", content: "AI Error", reasoning: null })}\n\n`);
+            res.end();
+        } catch { /* ignore */ }
 
     }
 
