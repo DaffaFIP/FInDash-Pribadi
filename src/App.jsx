@@ -21,7 +21,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNavbar, setShowNavbar] = useState(true);
-  const offline = useOffline();
+  const { offline, justReconnected } = useOffline();
 
   // check firebase auth state
   useEffect(() => {
@@ -162,6 +162,11 @@ export default function App() {
       {offline && (
         <div className="bg-amber-400 px-4 py-2 text-center text-sm font-medium text-amber-900">
           You are offline — showing cached data
+        </div>
+      )}
+      {justReconnected && (
+        <div className="bg-green-500 px-4 py-2 text-center text-sm font-medium text-white">
+          Back online!
         </div>
       )}
 

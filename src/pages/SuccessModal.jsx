@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function SuccessModal({ isOpen, onClose, message = "Data updated successfully" }) {
   const [progress, setProgress] = useState(100);
   const DURATION = 3000;
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -18,12 +20,12 @@ export default function SuccessModal({ isOpen, onClose, message = "Data updated 
       setProgress(remaining);
       if (remaining <= 0) {
         clearInterval(id);
-        onClose();
+        onCloseRef.current();
       }
     }, 30);
 
     return () => clearInterval(id);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
