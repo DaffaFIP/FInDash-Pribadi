@@ -209,7 +209,7 @@ export default function MasterCategory({ user, onSuccess }) {
 
       <EditCategory
         isOpen={!!editTarget}
-        editData={editTarget || { name: "", color: "#4F46E5" }}
+        editData={editTarget}
         setEditData={setEditTarget}
         onClose={() => setEditTarget(null)}
         onSave={handleSaveCat}

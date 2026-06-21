@@ -5,7 +5,7 @@ import SuccessModal from "./SuccessModal";
 import { Trash2, SquarePen } from "lucide-react";
 import {
   collection,
-  getDocs,
+  onSnapshot,
   deleteDoc,
   doc,
   query,
@@ -16,7 +16,7 @@ import {
 
 import { db } from "../firebase";
 
-export default function App({ user }) {
+export default function ExpenseList({ user }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,40 +60,32 @@ export default function App({ user }) {
 
   // FETCH FIREBASE DATA
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const q = query(
-          collection(db, "expense"),
-          where("uid", "==", user.uid),
-          orderBy("Date", "desc")
-        );
+    const q = query(
+      collection(db, "expense"),
+      where("uid", "==", user.uid),
+      orderBy("Date", "desc")
+    );
 
-        const querySnapshot = await getDocs(q);
+    const unsub = onSnapshot(q, (querySnapshot) => {
+      const data = querySnapshot.docs.map((doc) => {
+        const firebaseData = doc.data();
 
-        const data = querySnapshot.docs.map((doc) => {
-          const firebaseData = doc.data();
+        return {
+          id: doc.id,
+          ...firebaseData,
+          Date: firebaseData.Date?.toDate(),
+        };
+      });
 
-          return {
-            id: doc.id,
-            ...firebaseData,
+      setExpenses(data);
+      setLoading(false);
+    }, (error) => {
+      console.log(error);
+      setError("Failed to load data");
+      setLoading(false);
+    });
 
-            // convert firestore timestamp
-            Date: firebaseData.Date?.toDate(),
-          };
-        });
-
-        setExpenses(data);
-      } catch (error) {
-        console.log(error);
-        setError("Failed to load data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTransactions();
+    return () => unsub();
   }, [user.uid]);
 
 
@@ -103,12 +95,6 @@ export default function App({ user }) {
 
       await deleteDoc(
         doc(db, "expense", deleteId)
-      );
-
-      setExpenses((prev) =>
-        prev.filter(
-          (item) => item.id !== deleteId
-        )
       );
 
       setIsDeleteOpen(false);
@@ -136,23 +122,6 @@ export default function App({ user }) {
         amount: Number(editData.amount),
         Date: new Date(editData.Date),
       });
-
-      // update state local
-      setExpenses((prev) =>
-        prev.map((item) =>
-          item.id === editData.id
-            ? {
-              ...editData,
-              amount: Number(
-                editData.amount
-              ),
-              Date: new Date(
-                editData.Date
-              ),
-            }
-            : item
-        )
-      );
 
       setIsEditOpen(false);
       setSuccessMessage("Data updated successfully");

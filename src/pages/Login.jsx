@@ -72,7 +72,7 @@ export default function Login() {
         </h1>
 
         {user ? (
-          <div className="animate-fade-in-up">
+          <div>
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
                 {user.email?.charAt(0).toUpperCase()}
@@ -127,7 +127,7 @@ export default function Login() {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleLogin} className="animate-fade-in-up">
+          <form onSubmit={handleLogin}>
             <div className="mb-4">
               <label
                 htmlFor="email"

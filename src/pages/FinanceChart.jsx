@@ -14,14 +14,14 @@ import {
 
 import {
   collection,
-  getDocs,
+  onSnapshot,
   query,
   where,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
 
-export default function App({ user }) {
+export default function FinanceChart({ user }) {
   const [expenses, setExpenses] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [filter, setFilter] = useState("30days");
@@ -32,54 +32,51 @@ export default function App({ user }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const expenseQuery = query(
-          collection(db, "expense"),
-          where("uid", "==", user.uid)
-        );
-        const incomeQuery = query(
-          collection(db, "income"),
-          where("uid", "==", user.uid)
-        );
-
-        const [expenseSnap, incomeSnap] = await Promise.all([
-          getDocs(expenseQuery),
-          getDocs(incomeQuery),
-        ]);
-
-        const expenseData = expenseSnap.docs.map((doc) => {
-          const firebaseData = doc.data();
-          return {
-            id: doc.id,
-            ...firebaseData,
-            Date: firebaseData.Date?.toDate(),
-          };
-        });
-
-        const incomeData = incomeSnap.docs.map((doc) => {
-          const firebaseData = doc.data();
-          return {
-            id: doc.id,
-            ...firebaseData,
-            Date: firebaseData.Date?.toDate(),
-          };
-        });
-
-        setExpenses(expenseData);
-        setIncomes(incomeData);
-      } catch (error) {
-        console.log(error);
-        setError("Failed to load data");
-      } finally {
-        setLoading(false);
-      }
+    let loaded = 0;
+    const checkDone = () => {
+      loaded++;
+      if (loaded === 2) setLoading(false);
     };
 
-    fetchTransactions();
+    const expenseQuery = query(
+      collection(db, "expense"),
+      where("uid", "==", user.uid)
+    );
+    const incomeQuery = query(
+      collection(db, "income"),
+      where("uid", "==", user.uid)
+    );
+
+    const unsubExpense = onSnapshot(expenseQuery, (snap) => {
+      const data = snap.docs.map((doc) => {
+        const d = doc.data();
+        return { id: doc.id, ...d, Date: d.Date?.toDate() };
+      });
+      setExpenses(data);
+      checkDone();
+    }, (error) => {
+      console.log(error);
+      setError("Failed to load data");
+      checkDone();
+    });
+
+    const unsubIncome = onSnapshot(incomeQuery, (snap) => {
+      const data = snap.docs.map((doc) => {
+        const d = doc.data();
+        return { id: doc.id, ...d, Date: d.Date?.toDate() };
+      });
+      setIncomes(data);
+      checkDone();
+    }, (error) => {
+      console.log(error);
+      setError("Failed to load data");
+      checkDone();
+    });
+
+    return () => {
+      unsubExpense();
+      unsubIncome();
+    };
   }, [user.uid]);
 
   // FILTER

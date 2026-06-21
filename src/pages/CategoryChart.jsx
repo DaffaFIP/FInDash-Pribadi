@@ -12,14 +12,14 @@ import {
 
 import {
   collection,
-  getDocs,
+  onSnapshot,
   query,
   where,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
 
-export default function App({ user }) {
+export default function CategoryChart({ user }) {
   const [expenses, setExpenses] = useState([]);
   const [masterCategories, setMasterCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,52 +28,50 @@ export default function App({ user }) {
   const [hiddenCategories, setHiddenCategories] = useState({});
 
   useEffect(() => {
-    const fetchExpenses = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const q = query(
-          collection(db, "expense"),
-          where("uid", "==", user.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map((doc) => {
-          const firebaseData = doc.data();
-          return {
-            id: doc.id,
-            ...firebaseData,
-            Date: firebaseData.Date?.toDate(),
-          };
-        });
-        setExpenses(data);
-      } catch (error) {
-        console.log(error);
-        setError("Failed to load data");
-      } finally {
-        setLoading(false);
-      }
+    let loaded = 0;
+    const checkDone = () => {
+      loaded++;
+      if (loaded === 2) setLoading(false);
     };
-    fetchExpenses();
-  }, [user.uid]);
 
-  useEffect(() => {
-    const fetchMasterCategory = async () => {
-      try {
-        const q = query(
-          collection(db, "mastercategory"),
-          where("uid", "==", user.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setMasterCategories(data);
-      } catch (error) {
-        console.log(error);
-      }
+    const expenseQ = query(
+      collection(db, "expense"),
+      where("uid", "==", user.uid)
+    );
+    const catQ = query(
+      collection(db, "mastercategory"),
+      where("uid", "==", user.uid)
+    );
+
+    const unsubExpense = onSnapshot(expenseQ, (snap) => {
+      const data = snap.docs.map((doc) => {
+        const d = doc.data();
+        return { id: doc.id, ...d, Date: d.Date?.toDate() };
+      });
+      setExpenses(data);
+      checkDone();
+    }, (error) => {
+      console.log(error);
+      setError("Failed to load data");
+      checkDone();
+    });
+
+    const unsubCat = onSnapshot(catQ, (snap) => {
+      const data = snap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setMasterCategories(data);
+      checkDone();
+    }, (error) => {
+      console.log(error);
+      checkDone();
+    });
+
+    return () => {
+      unsubExpense();
+      unsubCat();
     };
-    fetchMasterCategory();
   }, [user.uid]);
 
   const categoryColorMap = useMemo(() => {

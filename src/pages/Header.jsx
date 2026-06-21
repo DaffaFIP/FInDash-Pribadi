@@ -3,14 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   collection,
-  getDocs,
+  onSnapshot,
   query,
   where,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
 
-export default function App({ user }) {
+export default function Header({ user }) {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,38 +27,31 @@ export default function App({ user }) {
 
   // FETCH FIREBASE DATA
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const q = query(
-          collection(db, "expense"),
-          where("uid", "==", user.uid)
-        );
-        const querySnapshot = await getDocs(q);
+    const q = query(
+      collection(db, "expense"),
+      where("uid", "==", user.uid)
+    );
 
-        const data = querySnapshot.docs.map((doc) => {
-          const firebaseData = doc.data();
+    const unsub = onSnapshot(q, (querySnapshot) => {
+      const data = querySnapshot.docs.map((doc) => {
+        const firebaseData = doc.data();
 
-          return {
-            id: doc.id,
-            ...firebaseData,
+        return {
+          id: doc.id,
+          ...firebaseData,
+          Date: firebaseData.Date?.toDate(),
+        };
+      });
 
-            // convert firestore timestamp
-            Date: firebaseData.Date?.toDate(),
-          };
-        });
+      setExpenses(data);
+      setLoading(false);
+    }, (error) => {
+      console.log(error);
+      setError("Failed to load data");
+      setLoading(false);
+    });
 
-        setExpenses(data);
-      } catch (error) {
-        console.log(error);
-        setError("Failed to load data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTransactions();
+    return () => unsub();
   }, [user.uid]);
 
   // FILTER BULAN INI

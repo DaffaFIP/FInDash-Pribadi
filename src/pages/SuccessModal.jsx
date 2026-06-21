@@ -36,12 +36,6 @@ export default function SuccessModal({ isOpen, onClose, message = "Data updated 
         }
         .animate-popup { animation: popup 0.3s ease-out; }
 
-        @keyframes fade-in {
-          0% { opacity: 0; }
-          100% { opacity: 1; }
-        }
-        .animate-fade-in { animation: fade-in 0.2s ease-out; }
-
         @keyframes pop-icon {
           0% { transform: scale(0); }
           50% { transform: scale(1.2); }

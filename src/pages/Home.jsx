@@ -5,7 +5,7 @@ import ExpenseList from "./ExpenseList";
 import IncomeList from "./IncomeList";
 import Doughnut from "./Doughnut";
 
-export default function App({ user }) {
+export default function Home({ user }) {
  
   return (
 

@@ -13,7 +13,6 @@ import {
 
 import {
   collection,
-  getDocs,
   onSnapshot,
   query,
   where,
@@ -21,7 +20,7 @@ import {
 
 import { db } from "../firebase";
 
-export default function App({ user }) {
+export default function Doughnut({ user }) {
 
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,45 +36,29 @@ export default function App({ user }) {
 
   // FETCH FIREBASE DATA
   useEffect(() => {
+    const q = query(
+      collection(db, "expense"),
+      where("uid", "==", user.uid)
+    );
 
-    const fetchTransactions = async () => {
+    const unsub = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((doc) => {
+        const firebaseData = doc.data();
+        return {
+          id: doc.id,
+          ...firebaseData,
+          Date: firebaseData.Date?.toDate(),
+        };
+      });
+      setExpenses(data);
+      setLoading(false);
+    }, (error) => {
+      console.log(error);
+      setError("Failed to load data");
+      setLoading(false);
+    });
 
-      try {
-        setLoading(true);
-        setError(null);
-        const q = query(
-          collection(db, "expense"),
-          where("uid", "==", user.uid)
-        );
-        const querySnapshot = await getDocs(q);
-
-        const data =
-          querySnapshot.docs.map((doc) => {
-
-            const firebaseData =
-              doc.data();
-
-            return {
-              id: doc.id,
-              ...firebaseData,
-
-              Date:
-                firebaseData.Date?.toDate(),
-            };
-          });
-
-        setExpenses(data);
-
-      } catch (error) {
-        console.log(error);
-        setError("Failed to load data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTransactions();
-
+    return () => unsub();
   }, [user.uid]);
 
   // FETCH MASTER CATEGORIES

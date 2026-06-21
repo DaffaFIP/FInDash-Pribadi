@@ -11,6 +11,7 @@ import Login from './pages/Login'
 import AIChat from './pages/AIChat'
 import ProtectedRoute from "./pages/ProtectedRoute";
 import ErrorBoundary from "./pages/ErrorBoundary";
+import useOffline from "./hooks/useOffline";
 
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -20,6 +21,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNavbar, setShowNavbar] = useState(true);
+  const offline = useOffline();
 
   // check firebase auth state
   useEffect(() => {
@@ -157,6 +159,12 @@ export default function App() {
         </div>
       </nav>
 
+      {offline && (
+        <div className="bg-amber-400 px-4 py-2 text-center text-sm font-medium text-amber-900">
+          You are offline — showing cached data
+        </div>
+      )}
+
       <main className="flex-1">
         <ErrorBoundary>
         <Routes>
@@ -189,7 +197,7 @@ export default function App() {
         />
 
 
-        <Route path="/login" element={<Login user={user} />} />
+        <Route path="/login" element={<Login />} />
 
         <Route
           path="/ai"

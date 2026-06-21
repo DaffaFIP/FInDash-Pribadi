@@ -40,7 +40,7 @@ The application is a **single-user personal finance tool** — not a multi-tenan
 
 1. **Login** → Firebase email/password authentication.
 2. **Add Transaction** → Fill form with title, category, amount, date → Saved to Firestore.
-3. **View Dashboard** → See monthly total (`Header.jsx`), line chart (`Chart.jsx`), category grid (`Brownie.jsx`), and transaction table (`Tabel.jsx`).
+3. **View Dashboard** → See monthly total (`Header.jsx`), line chart (`Chart.jsx`), category grid (`Doughnut.jsx`), and transaction table (`Tabel.jsx`).
 4. **Edit / Delete** → Inline modal operations on table rows.
 5. **Ask AI** → Chat with an LLM that has context of the user's last 50 transactions.
 
@@ -195,7 +195,7 @@ flowchart LR
         A1[AddData.jsx]
         A2[Tabel.jsx]
         A3[Chart.jsx]
-        A4[Brownie.jsx]
+        A4[Doughnut.jsx]
         A5[Header.jsx]
         A6[AIChat.jsx]
     end
@@ -239,10 +239,10 @@ flowchart LR
 |---|---|---|
 | **Auth** | `src/firebase.js`, `src/pages/Login.jsx`, `src/pages/ProtectedRoute.jsx` | Login/logout, route guarding, token management |
 | **Add Transaction** | `src/pages/AddData.jsx` | Form input → Firestore write |
-| **Dashboard** | `src/pages/Home.jsx` | Composition of Header, Chart, Brownie, Table |
+| **Dashboard** | `src/pages/Home.jsx` | Composition of Header, Chart, Doughnut, Table |
 | **Header Summary** | `src/pages/Header.jsx` | Current month total |
 | **Line Chart** | `src/pages/Chart.jsx` | Daily expense line chart with 7d/30d/all filter |
-| **Brownie Chart** | `src/pages/Brownie.jsx` | 10×10 category distribution grid |
+| **Doughnut Chart** | `src/pages/Doughnut.jsx` | 10×10 category distribution grid |
 | **Transaction Table** | `src/pages/Tabel.jsx` | Paginated table with search, filter, edit, delete |
 | **AI Chat** | `src/pages/AIChat.jsx` | Chat UI with markdown rendering |
 | **Edit Modal** | `src/pages/EditModal.jsx` | Edit transaction overlay |
@@ -272,13 +272,13 @@ FInDash-Pribadi/
 │   │   ├── About.jsx             #     Wraps Login (seems like placeholder)
 │   │   ├── AddData.jsx           #     Add transaction form
 │   │   ├── AIChat.jsx            #     AI Financial Assistant
-│   │   ├── Brownie.jsx           #     Category distribution grid
+│   │   ├── Doughnut.jsx           #     Category distribution grid
 │   │   ├── Chart.jsx             #     Recharts line chart
 │   │   ├── DeleteModal.jsx       #     Delete confirmation dialog
 │   │   ├── EditModal.jsx         #     Edit transaction dialog
 │   │   ├── ErrorBoundary.jsx     #     React error boundary
 │   │   ├── Header.jsx            #     Monthly spending summary
-│   │   ├── Home.jsx              #     Dashboard (composes Header+Chart+Brownie+Tabel)
+│   │   ├── Home.jsx              #     Dashboard (composes Header+Chart+Doughnut+Tabel)
 │   │   ├── Login.jsx             #     Firebase email/password auth
 │   │   ├── ProtectedRoute.jsx    #     Auth guard wrapper
 │   │   └── Tabel.jsx             #     Transactions table with CRUD
@@ -313,10 +313,10 @@ FInDash-Pribadi/
 |---|---|---|---|
 | **Login / Logout** | Firebase email/password authentication with `onAuthStateChanged` listener | `Login.jsx` | `firebase.js`, `App.jsx`, `ProtectedRoute.jsx` |
 | **Add Transaction** | Form with title, category, amount, date → writes to Firestore | `AddData.jsx` | `firebase.js` |
-| **Dashboard View** | Composes Header, Chart, Brownie, Table into a single page | `Home.jsx` | All dashboard components |
+| **Dashboard View** | Composes Header, Chart, Doughnut, Table into a single page | `Home.jsx` | All dashboard components |
 | **Monthly Total** | Shows total expenses for the current month in IDR | `Header.jsx` | — |
 | **Line Chart** | Recharts `LineChart` with 7-day, 30-day, all-time filters | `Chart.jsx` | — |
-| **Category Grid** | 10×10 proportional grid showing category spending distribution | `Brownie.jsx` | — |
+| **Category Grid** | 10×10 proportional grid showing category spending distribution | `Doughnut.jsx` | — |
 | **Transaction Table** | Paginated table with search (title), filter (category), edit/delete actions | `Tabel.jsx` | `EditModal.jsx`, `DeleteModal.jsx` |
 | **Edit Transaction** | Pre-populated modal form that calls `updateDoc` | `EditModal.jsx` | `Tabel.jsx` |
 | **Delete Transaction** | Confirmation dialog that calls `deleteDoc` | `DeleteModal.jsx` | `Tabel.jsx` |
@@ -402,7 +402,7 @@ The schema is not declared anywhere; it emerges from how documents are written a
 
 | Field | Type | Required | Written In | Read In |
 |---|---|---|---|---|
-| `title` | `string` | Yes | `AddData.jsx:42` | `Tabel.jsx`, `Header.jsx`, `Chart.jsx`, `Brownie.jsx`, `server/server.js`, `AIChat.jsx` |
+| `title` | `string` | Yes | `AddData.jsx:42` | `Tabel.jsx`, `Header.jsx`, `Chart.jsx`, `Doughnut.jsx`, `server/server.js`, `AIChat.jsx` |
 | `category` | `string` (enum) | Yes | `AddData.jsx:43` | All readers |
 | `amount` | `number` | Yes | `AddData.jsx:44` | All readers |
 | `Date` | `Firebase Timestamp` | Yes | `AddData.jsx:47` | All readers (converted via `.toDate()`) |
@@ -425,7 +425,7 @@ Defined in `AddData.jsx:66-72` and used for filtering in `Tabel.jsx`:
 
 | Pattern | Method | Used By |
 |---|---|---|
-| Read all (no filter) | `getDocs(collection(db, "transactions"))` | `Header.jsx`, `Chart.jsx`, `Brownie.jsx`, `AIChat.jsx` |
+| Read all (no filter) | `getDocs(collection(db, "transactions"))` | `Header.jsx`, `Chart.jsx`, `Doughnut.jsx`, `AIChat.jsx` |
 | Read all (ordered by date desc) | `query(collection(db, "transactions"), orderBy("Date","desc"))` | `Tabel.jsx` |
 | Read (limited, server-side) | `db.collection("transactions").limit(50).get()` | `server/server.js` |
 | Create | `addDoc(collection(db, "transactions"), {...})` | `AddData.jsx` |
@@ -547,7 +547,7 @@ CORS preflight. Returns 200 with `Access-Control-Allow-Origin: *`.
 | Path | Component | Protected | Notes |
 |---|---|---|---|
 | `/` | `AddData` | Yes | Root path renders Add Transaction form |
-| `/home` | `Home` (Dashboard) | Yes | Main dashboard: Header + Chart + Brownie + Table |
+| `/home` | `Home` (Dashboard) | Yes | Main dashboard: Header + Chart + Doughnut + Table |
 | `/adddata` | `AddData` | Yes | Duplicate of `/` |
 | `/about` | `About` | Yes | Renders `<Login />` — seems like a placeholder |
 | `/login` | `Login` | No | Login/logout page |
@@ -786,7 +786,7 @@ The frontend reads and writes Firestore directly using the client SDK (`firebase
 
 The application has a simple data flow: fetch once on mount, display in charts/table, mutate via modals. React's built-in `useState` and `useEffect` suffice for this scope.
 
-**Trade-off**: As seen in the repeated data fetching across `Header.jsx`, `Chart.jsx`, `Brownie.jsx`, and `Tabel.jsx` — each component independently fetches the same data. A shared state solution (React Context, React Query, or Zustand) would reduce network calls.
+**Trade-off**: As seen in the repeated data fetching across `Header.jsx`, `Chart.jsx`, `Doughnut.jsx`, and `Tabel.jsx` — each component independently fetches the same data. A shared state solution (React Context, React Query, or Zustand) would reduce network calls.
 
 ### Why Tailwind via CDN Instead of npm?
 

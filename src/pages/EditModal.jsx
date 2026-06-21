@@ -53,11 +53,6 @@ export default function EditModal({
           }
           .animate-fade-in { animation: fade-in 0.2s ease-out; }
 
-          @keyframes fade-out {
-            0% { opacity: 1; }
-            100% { opacity: 0; }
-          }
-          .animate-fade-out { animation: fade-out 0.3s ease-in forwards; }
         `}</style>
 
         <div className={`fixed inset-0 z-50 flex ${isClosing ? '' : 'animate-fade-in'} items-center justify-center bg-black/50`}>
