@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
         if (!response.ok) {
             const errorText = await response.text();
             console.error("OpenRouter error:", response.status, errorText);
-            return res.status(502).json({ error: `OpenRouter API error (${response.status}): ${errorText}` });
+            return res.status(502).json({ error: `OpenRouter API error (${response.status})` });
         }
 
         // SSE headers
