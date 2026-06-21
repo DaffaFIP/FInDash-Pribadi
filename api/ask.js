@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+                model: process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free",
                 messages,
                 stream: true,
             }),
@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
         if (!response.ok) {
             const errorText = await response.text();
             console.error("OpenRouter error:", response.status, errorText);
-            return res.status(502).json({ error: `OpenRouter API error (${response.status})` });
+            return res.status(502).json({ error: `OpenRouter API error (${response.status}): ${errorText}` });
         }
 
         // SSE headers
