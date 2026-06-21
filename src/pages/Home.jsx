@@ -3,7 +3,7 @@ import FinanceChart from "./FinanceChart";
 import CategoryChart from "./CategoryChart";
 import ExpenseList from "./ExpenseList";
 import IncomeList from "./IncomeList";
-import Brownie from "./Brownie";
+import Doughnut from "./Doughnut";
 
 export default function App({ user }) {
  
@@ -27,7 +27,7 @@ export default function App({ user }) {
         </div>
 
         <div>
-          <Brownie user={user} />
+          <Doughnut user={user} />
         </div>
 
         <div>

@@ -97,7 +97,7 @@ export default function App({ user }) {
 
   // CURRENCY
   const currency = (value) => {
-    return Number(value).toLocaleString("en-US");
+    return Number(value).toLocaleString("id-ID");
   };
 
   return (

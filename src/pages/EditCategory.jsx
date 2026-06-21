@@ -1,5 +1,23 @@
+import { useState } from "react";
+
+const ICONS = [
+  "utensils", "coffee", "cake", "burger", "carrot", "apple-whole", "egg", "fish",
+  "car", "bus", "motorcycle", "bicycle", "gas-pump", "plane", "train", "truck",
+  "wifi", "lightbulb", "bolt", "water", "phone", "envelope", "tv", "laptop",
+  "film", "gamepad", "music", "headset", "book", "camera", "dice", "guitar",
+  "cart-shopping", "bag-shopping", "gift", "tag", "gem", "wallet", "coins", "piggy-bank",
+  "heart-pulse", "dumbbell", "person-running", "soap", "house", "paw", "tree", "leaf",
+  "users", "globe", "clock", "calendar", "star", "heart", "bell", "gear",
+];
+
 export default function EditCategory({ isOpen, editData, setEditData, onClose, onSave }) {
+  const [search, setSearch] = useState("");
+
   if (!isOpen) return null;
+
+  const filtered = ICONS.filter((icon) =>
+    icon.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleChange = (e) => {
     setEditData({
@@ -56,6 +74,71 @@ export default function EditCategory({ isOpen, editData, setEditData, onClose, o
                 placeholder="#06B6D4"
                 className="w-full rounded-lg border dark:border-slate-600 p-3 font-mono text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none dark:bg-slate-700 dark:text-slate-200"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Icon
+              </label>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search icon name..."
+                className="w-full rounded-lg border dark:border-slate-600 p-2 mb-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none dark:bg-slate-700 dark:text-slate-200"
+              />
+              <div className="grid grid-cols-8 gap-2 max-h-40 overflow-y-auto p-2 rounded-lg border dark:border-slate-600">
+                {filtered.map((icon) => (
+                  <button
+                    key={icon}
+                    onClick={() => {
+                      setEditData({ ...editData, icon });
+                      setSearch("");
+                    }}
+                    className={`flex items-center justify-center w-9 h-9 rounded-lg border text-lg transition ${
+                      editData.icon === icon
+                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600"
+                        : "border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-indigo-300 hover:text-indigo-500"
+                    }`}
+                    title={icon}
+                    type="button"
+                  >
+                    <i className={`fa-solid fa-${icon}`} />
+                  </button>
+                ))}
+                {search && filtered.length === 0 && (
+                  <div className="col-span-8 py-3 text-center text-sm text-slate-400 dark:text-slate-500">
+                    No matching icon.
+                  </div>
+                )}
+              </div>
+              {editData.icon && (
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    Selected: <code className="text-indigo-500">fa-{editData.icon}</code>
+                  </p>
+                  <button
+                    onClick={() => setEditData({ ...editData, icon: "" })}
+                    className="text-xs text-red-400 hover:text-red-600 transition"
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+              {search && !ICONS.includes(search) && (
+                <button
+                  onClick={() => {
+                    setEditData({ ...editData, icon: search });
+                    setSearch("");
+                  }}
+                  className="mt-2 w-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg py-2 text-sm text-slate-500 dark:text-slate-400 hover:border-indigo-400 hover:text-indigo-600 transition flex items-center justify-center gap-2"
+                  type="button"
+                >
+                  <i className="fa-solid fa-magic" />
+                  Use custom icon: <code>fa-{search}</code>
+                </button>
+              )}
             </div>
 
             <div className="flex justify-end gap-2">

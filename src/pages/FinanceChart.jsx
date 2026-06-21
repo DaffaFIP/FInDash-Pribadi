@@ -308,11 +308,16 @@ export default function App({ user }) {
   }, [chartData]);
 
   const currency = (value) => {
-    return Number(value).toLocaleString("en-US");
+    return Number(value).toLocaleString("id-ID");
   };
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
+
+      <style>{`
+        :root { --tooltip-bg: #fff; --tooltip-border: #e2e8f0; --tooltip-color: #1e293b; }
+        .dark { --tooltip-bg: #1e293b; --tooltip-border: #334155; --tooltip-color: #e2e8f0; }
+      `}</style>
 
       {error && (
         <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 text-center text-sm text-red-600 dark:text-red-400">
@@ -399,6 +404,11 @@ export default function App({ user }) {
 
               <Tooltip
                 formatter={(value, name) => `${name}: ${currency(value)}`}
+                contentStyle={{
+                  backgroundColor: "var(--tooltip-bg)",
+                  borderColor: "var(--tooltip-border)",
+                  color: "var(--tooltip-color)",
+                }}
               />
 
               <Legend onClick={(e) => {

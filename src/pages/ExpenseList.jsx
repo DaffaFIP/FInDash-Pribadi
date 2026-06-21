@@ -167,7 +167,7 @@ export default function App({ user }) {
     setIsSuccessOpen(false);
 
   const currency = (value) => {
-    return Number(value).toLocaleString("en-US");
+    return Number(value).toLocaleString("id-ID");
   };
 
   // PAGINATION

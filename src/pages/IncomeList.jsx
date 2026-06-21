@@ -151,7 +151,7 @@ export default function IncomeList({ user }) {
     setIsSuccessOpen(false);
 
   const currency = (value) => {
-    return Number(value).toLocaleString("en-US");
+    return Number(value).toLocaleString("id-ID");
   };
 
   const filteredIncomes = useMemo(() => {

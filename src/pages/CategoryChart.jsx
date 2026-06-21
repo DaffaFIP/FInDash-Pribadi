@@ -264,6 +264,10 @@ export default function App({ user }) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
+      <style>{`
+        :root { --tooltip-bg: #fff; --tooltip-border: #e2e8f0; --tooltip-color: #1e293b; }
+        .dark { --tooltip-bg: #1e293b; --tooltip-border: #334155; --tooltip-color: #e2e8f0; }
+      `}</style>
       {error && (
         <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 text-center text-sm text-red-600 dark:text-red-400">
           {error}
@@ -323,6 +327,11 @@ export default function App({ user }) {
                   <YAxis />
                   <Tooltip
                     formatter={(value, name) => `${name}: ${currency(value)}`}
+                    contentStyle={{
+                      backgroundColor: "var(--tooltip-bg)",
+                      borderColor: "var(--tooltip-border)",
+                      color: "var(--tooltip-color)",
+                    }}
                   />
                   {allCategories.map((cat) => (
                     <Line
@@ -340,7 +349,7 @@ export default function App({ user }) {
               </ResponsiveContainer>
             </div>
 
-            <div className="flex flex-nowrap justify-center gap-4 overflow-x-auto pt-4">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 pt-4">
               {allCategories.map((cat) => (
                 <button
                   key={cat}
