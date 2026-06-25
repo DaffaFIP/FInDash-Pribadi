@@ -23,7 +23,7 @@ export default function DataExportImport({ user, onSuccess, onError }) {
           Title: data.title || "",
           Amount: Number(data.amount || 0),
           Category: data.category || "",
-          Date: data.Date?.toDate().toLocaleDateString("en-GB") || "",
+          Date: data.Date?.toDate().toISOString().split("T")[0] || "",
         };
       });
 
@@ -32,7 +32,7 @@ export default function DataExportImport({ user, onSuccess, onError }) {
         return {
           Title: data.title || "",
           Amount: Number(data.amount || 0),
-          Date: data.Date?.toDate().toLocaleDateString("en-GB") || "",
+          Date: data.Date?.toDate().toISOString().split("T")[0] || "",
         };
       });
 
@@ -54,7 +54,7 @@ export default function DataExportImport({ user, onSuccess, onError }) {
     reader.onload = async (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-        const wb = XLSX.read(data, { type: "array" });
+        const wb = XLSX.read(data, { type: "array", cellDates: true });
 
         let added = 0;
 
@@ -67,7 +67,13 @@ export default function DataExportImport({ user, onSuccess, onError }) {
               title: row.Title || row.title || "",
               amount: Number(row.Amount || row.amount || 0),
               uid: user.uid,
-              Date: row.Date ? new Date(row.Date) : new Date(),
+              Date: row.Date
+                ? row.Date instanceof Date
+                  ? row.Date
+                  : typeof row.Date === "number"
+                    ? new Date(Math.round((row.Date - 25569) * 86400 * 1000))
+                    : new Date(row.Date)
+                : new Date(),
             };
             if (type === "expense") {
               docData.category = row.Category || row.category || "";
