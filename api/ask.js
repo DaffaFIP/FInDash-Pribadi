@@ -14,19 +14,29 @@ module.exports = async function handler(req, res) {
             return res.status(400).json({ error: "Messages required" });
         }
 
-        const apiKey = process.env.OPENROUTER_API_KEY;
+        const aiProvider = process.env.AI_PROVIDER || "openrouter";
+        const apiUrl = aiProvider === "deepseek"
+            ? "https://api.deepseek.com/v1/chat/completions"
+            : "https://openrouter.ai/api/v1/chat/completions";
+        const apiKey = aiProvider === "deepseek"
+            ? process.env.DEEPSEEK_API_KEY
+            : process.env.OPENROUTER_API_KEY;
+        const model = aiProvider === "deepseek"
+            ? (process.env.DEEPSEEK_MODEL || "deepseek-chat")
+            : (process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free");
+
         if (!apiKey) {
-            return res.status(500).json({ error: "OpenRouter API key not configured" });
+            return res.status(500).json({ error: `${aiProvider === "deepseek" ? "DeepSeek" : "OpenRouter"} API key not configured` });
         }
 
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        const response = await fetch(apiUrl, {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                model: process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free",
+                model,
                 messages,
                 stream: true,
             }),
@@ -34,8 +44,8 @@ module.exports = async function handler(req, res) {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error("OpenRouter error:", response.status, errorText);
-            return res.status(502).json({ error: `OpenRouter API error (${response.status})` });
+            console.error(`${aiProvider} error:`, response.status, errorText);
+            return res.status(502).json({ error: `${aiProvider} API error (${response.status})` });
         }
 
         // SSE headers
@@ -84,9 +94,10 @@ module.exports = async function handler(req, res) {
                         try {
                             const parsed = JSON.parse(payload);
                             const delta = parsed.choices?.[0]?.delta || {};
-                            if (delta.reasoning) {
-                                fullReasoning += delta.reasoning;
-                                sendEvent({ type: "reasoning", text: delta.reasoning });
+                            if (delta.reasoning || delta.reasoning_content) {
+                                const reasoningText = delta.reasoning || delta.reasoning_content;
+                                fullReasoning += reasoningText;
+                                sendEvent({ type: "reasoning", text: reasoningText });
                             }
                             if (delta.content) {
                                 fullContent += delta.content;

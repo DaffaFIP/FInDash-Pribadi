@@ -20,8 +20,8 @@ app.use((req, res, next) => {
 const MAX_CONVERSATIONS = 20;
 const userMemories = new Map();
 
-// AI Provider: "ollama" atau "openrouter"
-let aiProvider = process.env.AI_PROVIDER || "ollama";
+// AI Provider: "openrouter" atau "deepseek"
+let aiProvider = process.env.AI_PROVIDER || "openrouter";
 
 
 // Middleware
@@ -181,134 +181,87 @@ app.post("/ask-ai", async (req, res) => {
             }
         };
 
-        if (aiProvider === "openrouter") {
-            const apiKey = process.env.OPENROUTER_API_KEY;
-            if (!apiKey || apiKey === "sk-or-v1-your-key-here") {
-                sendEvent({ type: "done", content: "OPENROUTER_API_KEY not set in server/.env", reasoning: null });
-                return res.end();
-            }
+        const apiUrl = aiProvider === "deepseek"
+            ? "https://api.deepseek.com/v1/chat/completions"
+            : "https://openrouter.ai/api/v1/chat/completions";
 
-            const openrouterRes = await axios({
-                method: "post",
-                url: "https://openrouter.ai/api/v1/chat/completions",
-                data: {
-                    model: process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free",
-                    messages: memory,
-                    stream: true,
-                },
-                headers: {
-                    "Authorization": `Bearer ${apiKey}`,
-                    "Content-Type": "application/json",
-                },
-                responseType: "stream",
-                timeout: 300000,
-            });
+        const apiKey = aiProvider === "deepseek"
+            ? process.env.DEEPSEEK_API_KEY
+            : process.env.OPENROUTER_API_KEY;
 
-            let buffer = "";
+        const model = aiProvider === "deepseek"
+            ? (process.env.DEEPSEEK_MODEL || "deepseek-chat")
+            : (process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free");
 
-            openrouterRes.data.on("data", (chunk) => {
-                buffer += chunk.toString();
-                const lines = buffer.split("\n");
-                buffer = lines.pop();
+        const keyLabel = aiProvider === "deepseek" ? "DEEPSEEK_API_KEY" : "OPENROUTER_API_KEY";
 
-                for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (!trimmed || !trimmed.startsWith("data: ")) continue;
-                    const payload = trimmed.slice(6);
-                    if (payload === "[DONE]") {
-                        finishStream();
-                        return;
-                    }
-                    try {
-                        const parsed = JSON.parse(payload);
-                        const delta = parsed.choices?.[0]?.delta || {};
-                        if (delta.reasoning) {
-                            fullReasoning += delta.reasoning;
-                            sendEvent({ type: "reasoning", text: delta.reasoning });
-                        }
-                        if (delta.content) {
-                            fullContent += delta.content;
-                            sendEvent({ type: "content", text: delta.content });
-                        }
-                    } catch {
-                        // skip malformed lines
-                    }
-                }
-            });
-
-            openrouterRes.data.on("end", () => {
-                if (fullContent || fullReasoning) finishStream();
-                else {
-                    sendEvent({ type: "done", content: "Sorry, no answer available.", reasoning: null });
-                    res.end();
-                }
-            });
-
-            openrouterRes.data.on("error", (err) => {
-                console.log(err);
-                sendEvent({ type: "done", content: "AI stream error", reasoning: null });
-                res.end();
-            });
-
-        } else {
-            // default: ollama
-            const ollamaRes = await axios({
-                method: "post",
-                url: "http://localhost:11434/api/chat",
-                data: {
-                    model: process.env.OLLAMA_MODEL || "gemma4:e2b",
-                    messages: memory,
-                    stream: true,
-                },
-                responseType: "stream",
-                timeout: 600000,
-            });
-
-            let buffer = "";
-
-            ollamaRes.data.on("data", (chunk) => {
-                buffer += chunk.toString();
-                const lines = buffer.split("\n");
-                buffer = lines.pop();
-
-                for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (!trimmed) continue;
-                    try {
-                        const parsed = JSON.parse(trimmed);
-                        const msg = parsed.message || {};
-                        if (msg.reasoning_content) {
-                            fullReasoning += msg.reasoning_content;
-                            sendEvent({ type: "reasoning", text: msg.reasoning_content });
-                        }
-                        if (msg.content) {
-                            fullContent += msg.content;
-                            sendEvent({ type: "content", text: msg.content });
-                        }
-                        if (parsed.done) {
-                            finishStream();
-                            return;
-                        }
-                    } catch {
-                        // skip
-                    }
-                }
-            });
-
-            ollamaRes.data.on("end", () => {
-                if (fullContent || fullReasoning) finishStream();
-                else {
-                    sendEvent({ type: "done", content: "Sorry, no answer available.", reasoning: null });
-                    res.end();
-                }
-            });
-
-            ollamaRes.data.on("error", (err) => {
-                console.log(err);
-                sendEvent({ type: "done", content: "AI stream error", reasoning: null });
-                res.end();
-            });
+        if (!apiKey || apiKey === "your-deepseek-api-key-here" || apiKey === "sk-or-v1-your-key-here") {
+            sendEvent({ type: "done", content: `${keyLabel} not set in server/.env`, reasoning: null });
+            return res.end();
         }
+
+        const aiRes = await axios({
+            method: "post",
+            url: apiUrl,
+            data: {
+                model,
+                messages: memory,
+                stream: true,
+            },
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+            },
+            responseType: "stream",
+            timeout: 300000,
+        });
+
+        let buffer = "";
+
+        aiRes.data.on("data", (chunk) => {
+            buffer += chunk.toString();
+            const lines = buffer.split("\n");
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || !trimmed.startsWith("data: ")) continue;
+                const payload = trimmed.slice(6);
+                if (payload === "[DONE]") {
+                    finishStream();
+                    return;
+                }
+                try {
+                    const parsed = JSON.parse(payload);
+                    const delta = parsed.choices?.[0]?.delta || {};
+                    if (delta.reasoning || delta.reasoning_content) {
+                        const reasoningText = delta.reasoning || delta.reasoning_content;
+                        fullReasoning += reasoningText;
+                        sendEvent({ type: "reasoning", text: reasoningText });
+                    }
+                    if (delta.content) {
+                        fullContent += delta.content;
+                        sendEvent({ type: "content", text: delta.content });
+                    }
+                } catch {
+                    // skip malformed lines
+                }
+            }
+        });
+
+        aiRes.data.on("end", () => {
+            if (fullContent || fullReasoning) finishStream();
+            else {
+                sendEvent({ type: "done", content: "Sorry, no answer available.", reasoning: null });
+                res.end();
+            }
+        });
+
+        aiRes.data.on("error", (err) => {
+            console.log(err);
+            sendEvent({ type: "done", content: "AI stream error", reasoning: null });
+            res.end();
+        });
 
     } catch (err) {
 
@@ -330,10 +283,18 @@ app.get("/provider", (req, res) => {
 
 // SET PROVIDER
 app.post("/provider", (req, res) => {
-    const { provider } = req.body;
-    if (provider !== "ollama" && provider !== "openrouter") {
-        return res.status(400).json({ error: "Provider must be 'ollama' or 'openrouter'" });
+    const { provider, password } = req.body;
+    if (provider !== "openrouter" && provider !== "deepseek") {
+        return res.status(400).json({ error: "Provider must be 'openrouter' or 'deepseek'" });
     }
+
+    if (provider === "deepseek") {
+        const requiredPass = process.env.DEEPSEEK_PASSWORD;
+        if (requiredPass && requiredPass !== password) {
+            return res.status(403).json({ error: "Invalid password" });
+        }
+    }
+
     aiProvider = provider;
     console.log("AI Provider changed to:", provider);
     res.json({ success: true, provider: aiProvider });

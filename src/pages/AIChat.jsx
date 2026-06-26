@@ -3,6 +3,7 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
+import DeepSeekPassModal from "./DeepSeekPassModal";
 
 export default function AIChat({ user }) {
 
@@ -13,13 +14,16 @@ export default function AIChat({ user }) {
 
     const [question, setQuestion] = useState("");
     const [messages, setMessages] = useState([]);
-    const [provider, setProvider] = useState(isLocal ? "ollama" : "openrouter");
+    const [provider, setProvider] = useState("openrouter");
     const [providerLoading, setProviderLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [memoryReady, setMemoryReady] = useState(false);
     const [streamMode, setStreamMode] = useState(null); // null | "thinking" | "dots"
     const [liveReasoning, setLiveReasoning] = useState("");
     const [liveContent, setLiveContent] = useState("");
+    const [showPassModal, setShowPassModal] = useState(false);
+    const [passError, setPassError] = useState("");
+    const [passLoading, setPassLoading] = useState(false);
     const initialized = useRef(false);
     const chatEndRef = useRef(null);
     const systemPromptRef = useRef(null);
@@ -46,7 +50,7 @@ export default function AIChat({ user }) {
         }
     };
 
-    const switchProvider = async (newProvider) => {
+    const switchProvider = async (newProvider, password) => {
         setProviderLoading(true);
         try {
             const token = await user.getIdToken();
@@ -56,15 +60,39 @@ export default function AIChat({ user }) {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ provider: newProvider }),
+                body: JSON.stringify({ provider: newProvider, password }),
             });
             const data = await res.json();
-            if (data.success) setProvider(data.provider);
+            if (data.success) {
+                setProvider(data.provider);
+                setShowPassModal(false);
+                setPassError("");
+            } else {
+                setPassError(data.error || "Switch failed");
+            }
         } catch (err) {
             console.log(err);
+            setPassError("Connection error");
         } finally {
             setProviderLoading(false);
+            setPassLoading(false);
         }
+    };
+
+    const handleToggleClick = () => {
+        if (provider === "openrouter") {
+            setPassError("");
+            setPassLoading(false);
+            setShowPassModal(true);
+        } else {
+            switchProvider("openrouter");
+        }
+    };
+
+    const handlePassSubmit = (password) => {
+        setPassLoading(true);
+        setPassError("");
+        switchProvider("deepseek", password);
     };
 
     // --- LOCAL: ambil transaksi via client SDK, kirim ke Express server ---
@@ -351,15 +379,15 @@ export default function AIChat({ user }) {
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-slate-500 dark:text-slate-400">AI:</span>
                         <button
-                            onClick={() => switchProvider(provider === "ollama" ? "openrouter" : "ollama")}
+                            onClick={handleToggleClick}
                             disabled={providerLoading}
                             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                                provider === "ollama"
-                                    ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300"
-                                    : "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                                provider === "openrouter"
+                                    ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                                    : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
                             } disabled:opacity-50`}
                         >
-                            {providerLoading ? "..." : provider === "ollama" ? "Ollama" : "Open Router"}
+                            {providerLoading ? "..." : provider === "openrouter" ? "Open Router" : "DeepSeek"}
                         </button>
                     </div>
                 )}
@@ -368,7 +396,7 @@ export default function AIChat({ user }) {
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-slate-500 dark:text-slate-400">AI:</span>
                         <span className="rounded-lg bg-purple-100 dark:bg-purple-900/30 px-3 py-1.5 text-sm font-medium text-purple-700 dark:text-purple-300">
-                            Open Router
+                            {provider === "deepseek" ? "DeepSeek" : "Open Router"}
                         </span>
                     </div>
                 )}
@@ -476,6 +504,14 @@ export default function AIChat({ user }) {
                 </button>
             </div>
         </div>
+
+        <DeepSeekPassModal
+            isOpen={showPassModal}
+            onClose={() => setShowPassModal(false)}
+            onSubmit={handlePassSubmit}
+            loading={passLoading}
+            error={passError}
+        />
         </>
     );
 }
