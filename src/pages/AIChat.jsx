@@ -334,7 +334,7 @@ export default function AIChat({ user }) {
                         }
                         finalAnswer += data.text;
                     } else if (data.type === "done") {
-                        finalAnswer = data.content || finalAnswer;
+                        finalAnswer = data.content || localReasoning || finalAnswer;
                     }
                 } catch { /* skip malformed JSON */ }
             };

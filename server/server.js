@@ -171,11 +171,15 @@ app.post("/ask-ai", async (req, res) => {
         const finishStream = () => {
             if (streamEnded) return;
             streamEnded = true;
-            sendEvent({ type: "done", content: fullContent, reasoning: fullReasoning || null });
+            sendEvent({
+                type: "done",
+                content: fullContent || fullReasoning || "Sorry, no answer available.",
+                reasoning: fullReasoning || null,
+            });
             res.end();
 
             // save to memory (tanpa reasoning)
-            memory.push({ role: "assistant", content: fullContent });
+            if (fullContent) memory.push({ role: "assistant", content: fullContent });
             while (memory.length > MAX_CONVERSATIONS * 2 + 1) {
                 memory.splice(1, 2);
             }

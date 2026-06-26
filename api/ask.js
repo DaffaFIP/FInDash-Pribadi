@@ -66,7 +66,11 @@ module.exports = async function handler(req, res) {
         const finishStream = () => {
             if (streamEnded) return;
             streamEnded = true;
-            sendEvent({ type: "done", content: fullContent, reasoning: fullReasoning || null });
+            sendEvent({
+                type: "done",
+                content: fullContent || fullReasoning || "Sorry, no answer available.",
+                reasoning: fullReasoning || null,
+            });
             res.end();
         };
 
