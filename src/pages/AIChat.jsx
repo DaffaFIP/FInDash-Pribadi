@@ -32,6 +32,21 @@ export default function AIChat({ user }) {
     const [showPassModal, setShowPassModal] = useState(false);
     const [passError, setPassError] = useState("");
     const [passLoading, setPassLoading] = useState(false);
+
+    const getInitialModel = (key) => {
+        try { return localStorage.getItem(key) || null; }
+        catch { return null; }
+    };
+
+    const [openrouterModel, setOpenrouterModel] = useState(getInitialModel("openrouterModel"));
+    const [deepseekModel, setDeepseekModel] = useState(getInitialModel("deepseekModel"));
+
+    const getModelShort = (full) => {
+        if (!full) return "?";
+        const short = full.includes("/") ? full.split("/").pop() : full;
+        return short.replace(/:free$/, "").replace(/:thinking$/, "");
+    };
+
     const initialized = useRef(false);
     const chatEndRef = useRef(null);
     const systemPromptRef = useRef(null);
@@ -44,10 +59,16 @@ export default function AIChat({ user }) {
         scrollToBottom();
     }, [messages, liveReasoning, liveContent]);
 
-    // sync provider ke localStorage
+    // sync provider & model names ke localStorage
     useEffect(() => {
         localStorage.setItem("aiProvider", provider);
     }, [provider]);
+    useEffect(() => {
+        if (openrouterModel) localStorage.setItem("openrouterModel", openrouterModel);
+    }, [openrouterModel]);
+    useEffect(() => {
+        if (deepseekModel) localStorage.setItem("deepseekModel", deepseekModel);
+    }, [deepseekModel]);
 
     // --- LOCAL MODE: fetch & switch provider via Express server ---
     const fetchProvider = async () => {
@@ -58,6 +79,20 @@ export default function AIChat({ user }) {
             });
             const data = await res.json();
             setProvider(data.provider);
+            if (data.openrouterModel) setOpenrouterModel(data.openrouterModel);
+            if (data.deepseekModel) setDeepseekModel(data.deepseekModel);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    const fetchProviderDeployed = async () => {
+        try {
+            const res = await fetch("/api/provider");
+            const data = await res.json();
+            if (data.provider) setProvider(data.provider);
+            if (data.openrouterModel) setOpenrouterModel(data.openrouterModel);
+            if (data.deepseekModel) setDeepseekModel(data.deepseekModel);
         } catch (err) {
             console.log(err);
         }
@@ -228,6 +263,7 @@ export default function AIChat({ user }) {
                 "Answer concisely, clearly, and professionally.";
 
             setMemoryReady(true);
+            fetchProviderDeployed();
             console.log("AI initialized (deployed)");
 
         } catch (err) {
@@ -418,7 +454,9 @@ export default function AIChat({ user }) {
                                 : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
                         } disabled:opacity-50`}
                     >
-                        {providerLoading ? "..." : provider === "openrouter" ? "Open Router" : "DeepSeek"}
+                        {providerLoading ? "..." : provider === "openrouter"
+                            ? getModelShort(openrouterModel || "Default")
+                            : getModelShort(deepseekModel || "DeepSeek")}
                     </button>
                 </div>
             </div>

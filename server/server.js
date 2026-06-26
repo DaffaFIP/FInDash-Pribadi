@@ -282,7 +282,11 @@ app.post("/ask-ai", async (req, res) => {
 
 // GET PROVIDER
 app.get("/provider", (req, res) => {
-    res.json({ provider: aiProvider });
+    res.json({
+        provider: aiProvider,
+        openrouterModel: process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free",
+        deepseekModel: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+    });
 });
 
 // SET PROVIDER
