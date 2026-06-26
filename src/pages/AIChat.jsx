@@ -14,7 +14,15 @@ export default function AIChat({ user }) {
 
     const [question, setQuestion] = useState("");
     const [messages, setMessages] = useState([]);
-    const [provider, setProvider] = useState("openrouter");
+    const getInitialProvider = () => {
+        try {
+            const saved = localStorage.getItem("aiProvider");
+            if (saved === "openrouter" || saved === "deepseek") return saved;
+        } catch { /* localStorage unavailable */ }
+        return "openrouter";
+    };
+
+    const [provider, setProvider] = useState(getInitialProvider);
     const [providerLoading, setProviderLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [memoryReady, setMemoryReady] = useState(false);
@@ -36,6 +44,11 @@ export default function AIChat({ user }) {
         scrollToBottom();
     }, [messages, liveReasoning, liveContent]);
 
+    // sync provider ke localStorage
+    useEffect(() => {
+        localStorage.setItem("aiProvider", provider);
+    }, [provider]);
+
     // --- LOCAL MODE: fetch & switch provider via Express server ---
     const fetchProvider = async () => {
         try {
@@ -53,23 +66,41 @@ export default function AIChat({ user }) {
     const switchProvider = async (newProvider, password) => {
         setProviderLoading(true);
         try {
-            const token = await user.getIdToken();
-            const res = await fetch(API_URL + "/provider", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ provider: newProvider, password }),
-            });
-            const data = await res.json();
-            if (data.success) {
-                setProvider(data.provider);
-                setShowPassModal(false);
-                setPassError("");
-            } else {
-                setPassError(data.error || "Switch failed");
+            if (isLocal) {
+                const token = await user.getIdToken();
+                const res = await fetch(API_URL + "/provider", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ provider: newProvider, password }),
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    setPassError(data.error || "Switch failed");
+                    setProviderLoading(false);
+                    setPassLoading(false);
+                    return;
+                }
+            } else if (newProvider === "deepseek" && password) {
+                const res = await fetch("/api/verify-password", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password }),
+                });
+                const data = await res.json();
+                if (!data.valid) {
+                    setPassError(data.error || "Invalid password");
+                    setProviderLoading(false);
+                    setPassLoading(false);
+                    return;
+                }
             }
+
+            setProvider(newProvider);
+            setShowPassModal(false);
+            setPassError("");
         } catch (err) {
             console.log(err);
             setPassError("Connection error");
@@ -245,6 +276,7 @@ export default function AIChat({ user }) {
                 return { question: userQuestion };
             }
             return {
+                provider,
                 messages: [
                     { role: "system", content: systemPromptRef.current },
                     ...messages,
@@ -375,31 +407,20 @@ export default function AIChat({ user }) {
                     AI Financial Assistant
                 </h1>
 
-                {isLocal && (
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-500 dark:text-slate-400">AI:</span>
-                        <button
-                            onClick={handleToggleClick}
-                            disabled={providerLoading}
-                            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                                provider === "openrouter"
-                                    ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
-                                    : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                            } disabled:opacity-50`}
-                        >
-                            {providerLoading ? "..." : provider === "openrouter" ? "Open Router" : "DeepSeek"}
-                        </button>
-                    </div>
-                )}
-
-                {!isLocal && (
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-500 dark:text-slate-400">AI:</span>
-                        <span className="rounded-lg bg-purple-100 dark:bg-purple-900/30 px-3 py-1.5 text-sm font-medium text-purple-700 dark:text-purple-300">
-                            {provider === "deepseek" ? "DeepSeek" : "Open Router"}
-                        </span>
-                    </div>
-                )}
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">AI:</span>
+                    <button
+                        onClick={handleToggleClick}
+                        disabled={providerLoading}
+                        className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                            provider === "openrouter"
+                                ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                                : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                        } disabled:opacity-50`}
+                    >
+                        {providerLoading ? "..." : provider === "openrouter" ? "Open Router" : "DeepSeek"}
+                    </button>
+                </div>
             </div>
 
             <div className="flex-1 space-y-4 overflow-y-auto rounded-2xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-4">

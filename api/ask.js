@@ -8,13 +8,13 @@ module.exports = async function handler(req, res) {
 
     try {
         const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
-        const { messages } = body;
+        const { messages, provider } = body;
 
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
             return res.status(400).json({ error: "Messages required" });
         }
 
-        const aiProvider = process.env.AI_PROVIDER || "openrouter";
+        const aiProvider = provider || process.env.AI_PROVIDER || "openrouter";
         const apiUrl = aiProvider === "deepseek"
             ? "https://api.deepseek.com/v1/chat/completions"
             : "https://openrouter.ai/api/v1/chat/completions";
