@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Send, MessageSquare } from "lucide-react";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { buildSystemPrompt } from "../prompts";
 import { db } from "../firebase";
-import DeepSeekPassModal from "./DeepSeekPassModal";
 
 export default function AIChat({ user }) {
 
@@ -14,152 +15,46 @@ export default function AIChat({ user }) {
 
     const [question, setQuestion] = useState("");
     const [messages, setMessages] = useState([]);
-    const getInitialProvider = () => {
-        try {
-            const saved = localStorage.getItem("aiProvider");
-            if (saved === "openrouter" || saved === "deepseek") return saved;
-        } catch { /* localStorage unavailable */ }
-        return "openrouter";
-    };
-
-    const [provider, setProvider] = useState(getInitialProvider);
-    const [providerLoading, setProviderLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [memoryReady, setMemoryReady] = useState(false);
     const [streamMode, setStreamMode] = useState(null); // null | "thinking" | "dots"
     const [liveReasoning, setLiveReasoning] = useState("");
     const [liveContent, setLiveContent] = useState("");
-    const [showPassModal, setShowPassModal] = useState(false);
-    const [passError, setPassError] = useState("");
-    const [passLoading, setPassLoading] = useState(false);
-
-    const getInitialModel = (key) => {
-        try { return localStorage.getItem(key) || null; }
-        catch { return null; }
-    };
-
-    const [openrouterModel, setOpenrouterModel] = useState(getInitialModel("openrouterModel"));
-    const [deepseekModel, setDeepseekModel] = useState(getInitialModel("deepseekModel"));
-
-    const getModelShort = (full) => {
-        if (!full) return "?";
-        const short = full.includes("/") ? full.split("/").pop() : full;
-        return short.replace(/:free$/, "").replace(/:thinking$/, "");
-    };
+    const [streamProvider, setStreamProvider] = useState(null);
 
     const initialized = useRef(false);
     const chatEndRef = useRef(null);
     const systemPromptRef = useRef(null);
+    const chatContainerRef = useRef(null);
+    const shouldAutoScroll = useRef(true);
+    const streamProviderRef = useRef(null);
+    const streamModelRef = useRef(null);
 
     const scrollToBottom = () => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    const handleScroll = () => {
+        const el = chatContainerRef.current;
+        if (!el) return;
+        const threshold = 100;
+        shouldAutoScroll.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    };
+
     useEffect(() => {
-        scrollToBottom();
+        const el = chatContainerRef.current;
+        if (!el) return;
+        el.addEventListener("scroll", handleScroll, { passive: true });
+        return () => el.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    useEffect(() => {
+        if (shouldAutoScroll.current) scrollToBottom();
     }, [messages, liveReasoning, liveContent]);
 
-    // sync provider & model names ke localStorage
-    useEffect(() => {
-        localStorage.setItem("aiProvider", provider);
-    }, [provider]);
-    useEffect(() => {
-        if (openrouterModel) localStorage.setItem("openrouterModel", openrouterModel);
-    }, [openrouterModel]);
-    useEffect(() => {
-        if (deepseekModel) localStorage.setItem("deepseekModel", deepseekModel);
-    }, [deepseekModel]);
 
-    // --- LOCAL MODE: fetch & switch provider via Express server ---
-    const fetchProvider = async () => {
-        try {
-            const token = await user.getIdToken();
-            const res = await fetch(API_URL + "/provider", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            const data = await res.json();
-            setProvider(data.provider);
-            if (data.openrouterModel) setOpenrouterModel(data.openrouterModel);
-            if (data.deepseekModel) setDeepseekModel(data.deepseekModel);
-        } catch (err) {
-            console.log(err);
-        }
-    };
 
-    const fetchProviderDeployed = async () => {
-        try {
-            const res = await fetch("/api/provider");
-            const data = await res.json();
-            if (data.provider) setProvider(data.provider);
-            if (data.openrouterModel) setOpenrouterModel(data.openrouterModel);
-            if (data.deepseekModel) setDeepseekModel(data.deepseekModel);
-        } catch (err) {
-            console.log(err);
-        }
-    };
 
-    const switchProvider = async (newProvider, password) => {
-        setProviderLoading(true);
-        try {
-            if (isLocal) {
-                const token = await user.getIdToken();
-                const res = await fetch(API_URL + "/provider", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ provider: newProvider, password }),
-                });
-                const data = await res.json();
-                if (!data.success) {
-                    setPassError(data.error || "Switch failed");
-                    setProviderLoading(false);
-                    setPassLoading(false);
-                    return;
-                }
-            } else if (newProvider === "deepseek" && password) {
-                const res = await fetch("/api/verify-password", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ password }),
-                });
-                const data = await res.json();
-                if (!data.valid) {
-                    setPassError(data.error || "Invalid password");
-                    setProviderLoading(false);
-                    setPassLoading(false);
-                    return;
-                }
-            }
-
-            setProvider(newProvider);
-            setShowPassModal(false);
-            setPassError("");
-        } catch (err) {
-            console.log(err);
-            setPassError("Connection error");
-        } finally {
-            setProviderLoading(false);
-            setPassLoading(false);
-        }
-    };
-
-    const handleToggleClick = () => {
-        if (provider === "openrouter") {
-            setPassError("");
-            setPassLoading(false);
-            setShowPassModal(true);
-        } else {
-            switchProvider("openrouter");
-        }
-    };
-
-    const handlePassSubmit = (password) => {
-        setPassLoading(true);
-        setPassError("");
-        switchProvider("deepseek", password);
-    };
 
     // --- LOCAL: ambil transaksi via client SDK, kirim ke Express server ---
     const initLocal = async () => {
@@ -206,7 +101,6 @@ export default function AIChat({ user }) {
             });
 
             console.log("AI initialized (local)");
-            fetchProvider();
 
         } catch (err) {
             console.log(err);
@@ -246,24 +140,9 @@ export default function AIChat({ user }) {
                 }),
             ];
 
-            const formatted = transactions
-                .map((t) => {
-                    let line = `- ${t.title} (${t.type})`;
-                    if (t.category) line += `\n  category: ${t.category}`;
-                    line += `\n  amount: Rp${t.amount}\n  date: ${t.date}`;
-                    return line;
-                })
-                .join("\n\n");
-
-            systemPromptRef.current =
-                "You are an AI financial analyst.\n\n" +
-                "Here is the user's transaction data:\n\n" +
-                formatted + "\n\n" +
-                "Use this data to answer all user questions.\n\n" +
-                "Answer concisely, clearly, and professionally.";
+            systemPromptRef.current = buildSystemPrompt(transactions);
 
             setMemoryReady(true);
-            fetchProviderDeployed();
             console.log("AI initialized (deployed)");
 
         } catch (err) {
@@ -297,9 +176,12 @@ export default function AIChat({ user }) {
         setStreamMode(null);
         setLiveReasoning("");
         setLiveContent("");
+        setStreamProvider(null);
 
         setMessages((prev) => [...prev, { role: "user", content: userQuestion }]);
         setLoading(true);
+        streamProviderRef.current = null;
+        streamModelRef.current = null;
 
         let finalAnswer = "";
         let localReasoning = "";
@@ -312,7 +194,6 @@ export default function AIChat({ user }) {
                 return { question: userQuestion };
             }
             return {
-                provider,
                 messages: [
                     { role: "system", content: systemPromptRef.current },
                     ...messages,
@@ -353,7 +234,13 @@ export default function AIChat({ user }) {
                 try {
                     const data = JSON.parse(payload);
 
-                    if (data.type === "reasoning") {
+                    if (data.type === "provider") {
+                        streamProviderRef.current = data.name;
+                        streamModelRef.current = data.model;
+                        setStreamProvider(data.name);
+                    } else if (data.type === "provider-fallback") {
+                        setMessages((prev) => [...prev, { role: "system", content: `${data.error} - switch to fallback mode` }]);
+                    } else if (data.type === "reasoning") {
                         if (!mode) {
                             mode = "thinking";
                             setStreamMode("thinking");
@@ -370,7 +257,7 @@ export default function AIChat({ user }) {
                         }
                         finalAnswer += data.text;
                     } else if (data.type === "done") {
-                        finalAnswer = data.content || localReasoning || finalAnswer;
+                        finalAnswer = data.content || data.reasoning || localReasoning || finalAnswer;
                     }
                 } catch { /* skip malformed JSON */ }
             };
@@ -391,11 +278,19 @@ export default function AIChat({ user }) {
             // process remaining buffer
             if (buffer.trim()) processLine(buffer);
 
-            if (!finalAnswer) throw new Error("Empty answer");
+            if (!finalAnswer) finalAnswer = "";
+
+            const isReasoningOnly = !!(localReasoning && finalAnswer && localReasoning === finalAnswer);
 
             setMessages((prev) => [
                 ...prev,
-                { role: "assistant", content: finalAnswer, reasoning: localReasoning || null },
+                {
+                    role: "assistant",
+                    content: isReasoningOnly ? "" : finalAnswer,
+                    reasoning: localReasoning || null,
+                    provider: streamProviderRef.current,
+                    model: streamModelRef.current,
+                },
             ]);
 
         } catch (err) {
@@ -428,7 +323,8 @@ export default function AIChat({ user }) {
             .markdown code { background: var(--md-code-bg); padding: 0.125em 0.375em; border-radius: 4px; font-size: 0.875em; }
             .markdown pre { background: var(--md-pre-bg); color: var(--md-pre-text); padding: 0.75em; border-radius: 8px; overflow-x: auto; margin-bottom: 0.5em; }
             .markdown pre code { background: none; padding: 0; color: inherit; }
-            .markdown table { border-collapse: collapse; margin-bottom: 0.5em; width: 100%; }
+            .markdown table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-collapse: collapse; margin-bottom: 0.5em; }
+            .markdown thead, .markdown tbody { white-space: nowrap; }
             .markdown th, .markdown td { border: 1px solid var(--md-table-border); padding: 0.375em 0.5em; text-align: left; font-size: 0.875em; }
             .markdown th { background: var(--md-th-bg); font-weight: 600; }
             .markdown blockquote { border-left: 3px solid var(--md-blockquote-border); padding-left: 0.75em; color: var(--md-blockquote-text); margin-bottom: 0.5em; }
@@ -437,48 +333,54 @@ export default function AIChat({ user }) {
             .markdown strong { font-weight: 600; }
         `}</style>
 
-        <div className="mx-auto flex h-full max-w-4xl flex-col p-6">
+        <div className="mx-auto flex h-full max-w-4xl flex-col p-3 pb-[max(12px,env(safe-area-inset-bottom))] md:p-6">
             <div className="mb-4 flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100 md:text-2xl">
                     AI Financial Assistant
                 </h1>
-
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-500 dark:text-slate-400">AI:</span>
-                    <button
-                        onClick={handleToggleClick}
-                        disabled={providerLoading}
-                        className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                            provider === "openrouter"
-                                ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
-                                : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                        } disabled:opacity-50`}
-                    >
-                        {providerLoading ? "..." : provider === "openrouter"
-                            ? getModelShort(openrouterModel || "Default")
-                            : getModelShort(deepseekModel || "DeepSeek")}
-                    </button>
-                </div>
             </div>
 
-            <div className="flex-1 space-y-4 overflow-y-auto rounded-2xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-4">
+            <div ref={chatContainerRef} className="flex-1 space-y-4 overflow-y-auto rounded-2xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3 md:p-4">
                 {messages.length === 0 ? (
-                    <div className="flex h-full items-center justify-center">
-                        <p className="text-center text-slate-400 dark:text-slate-500">
+                    <div className="flex h-full flex-col items-center justify-center gap-4 px-2">
+                        <MessageSquare className="h-12 w-12 text-slate-300 dark:text-slate-600" />
+                        <p className="text-center text-sm text-slate-400 dark:text-slate-500">
                             Ask something about your finances
                         </p>
+                        <div className="flex flex-wrap justify-center gap-2">
+                            {[
+                                "Total pengeluaranku bulan ini?",
+                                "Berapa rata-rata pemasukan per bulan?",
+                                "Kategori pengeluaran terbesarku?",
+                            ].map((s) => (
+                                <button
+                                    key={s}
+                                    onClick={() => setQuestion(s)}
+                                    className="rounded-full border border-slate-300 px-3 py-1.5 text-xs text-slate-500 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-400 dark:hover:border-indigo-400 dark:hover:text-indigo-300"
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 ) : (
                     messages.map((msg, index) => (
+                        msg.role === "system" ? (
+                            <div key={index} className="flex justify-start">
+                                <div className="max-w-[90%] rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 md:max-w-[80%]">
+                                    {msg.content}
+                                </div>
+                            </div>
+                        ) : (
                         <div
                             key={index}
                             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                         >
                             <div
-                                className={`markdown max-w-[80%] rounded-2xl px-4 py-3 ${
+                                className={`markdown rounded-2xl px-4 py-3 ${
                                     msg.role === "user"
-                                        ? "bg-indigo-600 text-white"
-                                        : "border dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200"
+                                        ? "max-w-[80%] bg-indigo-600 text-white md:max-w-[70%]"
+                                        : "max-w-[90%] border dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 md:max-w-[80%]"
                                 }`}
                             >
             {msg.role === "user" ? (
@@ -496,20 +398,29 @@ export default function AIChat({ user }) {
                         </details>
                     )}
                     <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
+                    {msg.provider && (
+                        <div className="mt-1.5 text-right text-[10px] text-slate-400 dark:text-slate-500">
+                            answered by {msg.model || msg.provider}
+                        </div>
+                    )}
                 </>
             )}
                             </div>
                         </div>
+                        )
                     ))
                 )}
 
                 {loading && streamMode !== "thinking" && (
                     <div className="flex justify-start">
-                        <div className="max-w-[80%] rounded-2xl border dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3">
+                        <div className="max-w-[90%] rounded-2xl border dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 md:max-w-[80%]">
                             <div className="flex items-center gap-1.5">
                                 <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: "0ms" }}></span>
                                 <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: "150ms" }}></span>
                                 <span className="h-2 w-2 animate-bounce rounded-full bg-slate-400" style={{ animationDelay: "300ms" }}></span>
+                                {streamProvider && (
+                                    <span className="ml-1 text-xs text-slate-400">{streamProvider}</span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -517,7 +428,7 @@ export default function AIChat({ user }) {
 
                 {loading && streamMode === "thinking" && (
                     <div className="flex justify-start">
-                        <div className="max-w-[80%] rounded-2xl border dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3">
+                        <div className="max-w-[90%] rounded-2xl border dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 md:max-w-[80%]">
                             {liveReasoning && (
                                 <details open className="mb-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 p-2">
                                     <summary className="cursor-pointer text-xs font-semibold text-slate-500 dark:text-slate-400 select-none">
@@ -543,34 +454,27 @@ export default function AIChat({ user }) {
                 <div ref={chatEndRef} />
             </div>
 
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-4 flex items-center gap-2 md:gap-3">
                 <input
                     type="text"
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && askAI()}
                     placeholder="Ask about your finances..."
-                    className="flex-1 rounded-xl border dark:border-slate-600 p-4 outline-none transition focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-slate-200"
+                    className="flex-1 rounded-xl border dark:border-slate-600 p-3 text-sm outline-none transition focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-slate-200 md:p-4 md:text-base"
                     disabled={loading || (!isLocal && !memoryReady)}
                 />
 
                 <button
                     onClick={askAI}
                     disabled={loading || !question.trim() || (!isLocal && !memoryReady)}
-                    className="rounded-xl bg-indigo-600 px-6 py-4 text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                    className="rounded-xl bg-indigo-600 p-3 text-white transition hover:bg-indigo-700 disabled:opacity-50 md:p-4"
                 >
-                    Send
+                    <Send size={20} />
                 </button>
             </div>
         </div>
 
-        <DeepSeekPassModal
-            isOpen={showPassModal}
-            onClose={() => setShowPassModal(false)}
-            onSubmit={handlePassSubmit}
-            loading={passLoading}
-            error={passError}
-        />
         </>
     );
 }

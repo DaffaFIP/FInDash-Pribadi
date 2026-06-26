@@ -79,37 +79,16 @@ app.post("/init-ai", async (req, res) => {
         }
 
 
-        const formattedTransactions = transactions
-            .map(t => {
-                let line = `\n        - ${t.title} (${t.type || "expense"})`;
-                if (t.category) line += `\n        category: ${t.category}`;
-                line += `\n        amount: Rp${t.amount}\n        date: ${t.date}`;
-                return line;
-            })
-            .join("\n");
-
         console.log(
             "Transactions loaded for",
             uid + ":",
             transactions.length
         );
 
-        // SYSTEM PROMPT per-user
+        const { buildSystemPrompt } = await import('../src/prompts.js');
+
         userMemories.set(uid, [
-            {
-                role: "system",
-                content: `
-        You are an AI financial analyst.
-
-        Here is the user's transaction data:
-
-        ${formattedTransactions}
-
-        Use this data to answer all user questions.
-
-        Answer concisely, clearly, and professionally.
-`
-            }
+            { role: "system", content: buildSystemPrompt(transactions) }
         ]);
 
         res.json({
@@ -130,7 +109,51 @@ app.post("/init-ai", async (req, res) => {
 });
 
 
-// ASK AI — streaming
+// ASK AI — streaming with auto-fallback
+
+function streamResponse(aiRes, sendEvent) {
+    return new Promise((resolve, reject) => {
+        let buffer = "";
+        let fullContent = "";
+        let fullReasoning = "";
+
+        aiRes.data.on("data", (chunk) => {
+            buffer += chunk.toString();
+            const lines = buffer.split("\n");
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || !trimmed.startsWith("data: ")) continue;
+                const payload = trimmed.slice(6);
+                if (payload === "[DONE]") {
+                    resolve({ content: fullContent, reasoning: fullReasoning });
+                    return;
+                }
+                try {
+                    const parsed = JSON.parse(payload);
+                    const delta = parsed.choices?.[0]?.delta || {};
+                    if (delta.reasoning || delta.reasoning_content) {
+                        const t = delta.reasoning || delta.reasoning_content;
+                        fullReasoning += t;
+                        sendEvent({ type: "reasoning", text: t });
+                    }
+                    if (delta.content) {
+                        fullContent += delta.content;
+                        sendEvent({ type: "content", text: delta.content });
+                    }
+                } catch { /* skip malformed */ }
+            }
+        });
+
+        aiRes.data.on("end", () => {
+            if (fullContent || fullReasoning) resolve({ content: fullContent, reasoning: fullReasoning });
+            else reject(new Error("No content received"));
+        });
+
+        aiRes.data.on("error", (err) => reject(err));
+    });
+}
 
 app.post("/ask-ai", async (req, res) => {
 
@@ -143,14 +166,12 @@ app.post("/ask-ai", async (req, res) => {
         }
 
         const uid = req.user.uid;
-
         if (!userMemories.has(uid)) {
             return res.status(400).json({ error: "AI not initialized" });
         }
 
         const memory = userMemories.get(uid);
         console.log("Question from", uid + ":", question);
-
         memory.push({ role: "user", content: question });
 
         // SSE headers
@@ -159,119 +180,100 @@ app.post("/ask-ai", async (req, res) => {
         res.setHeader("Connection", "keep-alive");
         res.setHeader("X-Accel-Buffering", "no");
 
-        let fullContent = "";
-        let fullReasoning = "";
         let streamEnded = false;
 
         const sendEvent = (data) => {
-            if (streamEnded) return;
-            res.write(`data: ${JSON.stringify(data)}\n\n`);
+            if (!streamEnded) res.write(`data: ${JSON.stringify(data)}\n\n`);
         };
 
-        const finishStream = () => {
+        const finishStream = (content, reasoning, provider, model, fallbackError) => {
             if (streamEnded) return;
             streamEnded = true;
             sendEvent({
                 type: "done",
-                content: fullContent || fullReasoning || "Sorry, no answer available.",
-                reasoning: fullReasoning || null,
+                content: content || reasoning || "Sorry, no answer available.",
+                reasoning: reasoning || null,
+                provider: provider || null,
+                model: model || null,
+                fallbackError: fallbackError || null,
             });
             res.end();
 
-            // save to memory (tanpa reasoning)
-            if (fullContent) memory.push({ role: "assistant", content: fullContent });
+            if (content) memory.push({ role: "assistant", content });
             while (memory.length > MAX_CONVERSATIONS * 2 + 1) {
                 memory.splice(1, 2);
             }
         };
 
-        const apiUrl = aiProvider === "deepseek"
-            ? "https://api.deepseek.com/v1/chat/completions"
-            : "https://openrouter.ai/api/v1/chat/completions";
+        const providerConfigs = [
+            {
+                name: "openrouter",
+                apiUrl: "https://openrouter.ai/api/v1/chat/completions",
+                apiKey: process.env.OPENROUTER_API_KEY,
+                model: process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free",
+                keyLabel: "OPENROUTER_API_KEY",
+                badKeys: ["sk-or-v1-your-key-here"],
+            },
+            {
+                name: "deepseek",
+                apiUrl: "https://api.deepseek.com/v1/chat/completions",
+                apiKey: process.env.DEEPSEEK_API_KEY,
+                model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+                keyLabel: "DEEPSEEK_API_KEY",
+                badKeys: ["your-deepseek-api-key-here"],
+            },
+        ];
 
-        const apiKey = aiProvider === "deepseek"
-            ? process.env.DEEPSEEK_API_KEY
-            : process.env.OPENROUTER_API_KEY;
+        // respect manual toggle: if user picked deepseek via /provider, try it first
+        const preferred = aiProvider === "deepseek" ? "deepseek" : "openrouter";
+        const orderedConfigs = [...providerConfigs].sort((a, b) =>
+            a.name === preferred ? -1 : b.name === preferred ? 1 : 0
+        );
 
-        const model = aiProvider === "deepseek"
-            ? (process.env.DEEPSEEK_MODEL || "deepseek-chat")
-            : (process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free");
+        let fallbackError = null;
 
-        const keyLabel = aiProvider === "deepseek" ? "DEEPSEEK_API_KEY" : "OPENROUTER_API_KEY";
+        for (const cfg of orderedConfigs) {
+            try {
+                if (!cfg.apiKey || cfg.badKeys.includes(cfg.apiKey)) {
+                    throw new Error(`${cfg.keyLabel} not set in server/.env`);
+                }
 
-        if (!apiKey || apiKey === "your-deepseek-api-key-here" || apiKey === "sk-or-v1-your-key-here") {
-            sendEvent({ type: "done", content: `${keyLabel} not set in server/.env`, reasoning: null });
-            return res.end();
+                const aiRes = await axios({
+                    method: "post",
+                    url: cfg.apiUrl,
+                    data: { model: cfg.model, messages: memory, stream: true },
+                    headers: {
+                        "Authorization": `Bearer ${cfg.apiKey}`,
+                        "Content-Type": "application/json",
+                    },
+                    responseType: "stream",
+                    timeout: 300000,
+                });
+
+                sendEvent({ type: "provider", name: cfg.name, model: cfg.model });
+
+                const result = await streamResponse(aiRes, sendEvent);
+
+                finishStream(result.content, result.reasoning, cfg.name, cfg.model, fallbackError);
+                return;
+
+            } catch (err) {
+                console.log(`${cfg.name} failed:`, err.message);
+                if (cfg.name === orderedConfigs[0].name) {
+                    fallbackError = err.message;
+                    sendEvent({ type: "provider-fallback", from: cfg.name, error: err.message });
+                }
+            }
         }
 
-        const aiRes = await axios({
-            method: "post",
-            url: apiUrl,
-            data: {
-                model,
-                messages: memory,
-                stream: true,
-            },
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            },
-            responseType: "stream",
-            timeout: 300000,
-        });
-
-        let buffer = "";
-
-        aiRes.data.on("data", (chunk) => {
-            buffer += chunk.toString();
-            const lines = buffer.split("\n");
-            buffer = lines.pop();
-
-            for (const line of lines) {
-                const trimmed = line.trim();
-                if (!trimmed || !trimmed.startsWith("data: ")) continue;
-                const payload = trimmed.slice(6);
-                if (payload === "[DONE]") {
-                    finishStream();
-                    return;
-                }
-                try {
-                    const parsed = JSON.parse(payload);
-                    const delta = parsed.choices?.[0]?.delta || {};
-                    if (delta.reasoning || delta.reasoning_content) {
-                        const reasoningText = delta.reasoning || delta.reasoning_content;
-                        fullReasoning += reasoningText;
-                        sendEvent({ type: "reasoning", text: reasoningText });
-                    }
-                    if (delta.content) {
-                        fullContent += delta.content;
-                        sendEvent({ type: "content", text: delta.content });
-                    }
-                } catch {
-                    // skip malformed lines
-                }
-            }
-        });
-
-        aiRes.data.on("end", () => {
-            if (fullContent || fullReasoning) finishStream();
-            else {
-                sendEvent({ type: "done", content: "Sorry, no answer available.", reasoning: null });
-                res.end();
-            }
-        });
-
-        aiRes.data.on("error", (err) => {
-            console.log(err);
-            sendEvent({ type: "done", content: "AI stream error", reasoning: null });
-            res.end();
-        });
+        // All providers failed
+        finishStream(null, null, null, null, `All providers failed. Last error: ${fallbackError}`);
 
     } catch (err) {
 
         console.log(err);
         try {
-            res.write(`data: ${JSON.stringify({ type: "done", content: "AI Error", reasoning: null })}\n\n`);
+            res.write(`data: ${JSON.stringify({ type: "done", content: "AI Error: " + err.message, reasoning: null, provider: null, model: null, fallbackError: null })}\n\n`);
             res.end();
         } catch { /* ignore */ }
 
