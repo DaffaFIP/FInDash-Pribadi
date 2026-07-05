@@ -3,7 +3,7 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Send, MessageSquare } from "lucide-react";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { buildSystemPrompt } from "../prompts";
+
 import { db } from "../firebase";
 
 export default function AIChat({ user }) {
@@ -140,7 +140,12 @@ export default function AIChat({ user }) {
                 }),
             ];
 
-            systemPromptRef.current = buildSystemPrompt(transactions);
+            systemPromptRef.current = `You are an AI financial analyst.\n\nHere is the user's transaction data:\n\n${transactions.map(t => {
+  let line = `- ${t.title} (${t.type || "expense"})`;
+  if (t.category) line += `\n  category: ${t.category}`;
+  line += `\n  amount: Rp${t.amount}\n  date: ${t.date}`;
+  return line;
+}).join("\n\n")}\n\nUse this data to answer all user questions.\n\nAnswer concisely, clearly, and professionally.`;
 
             setMemoryReady(true);
             console.log("AI initialized (deployed)");

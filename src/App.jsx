@@ -34,41 +34,14 @@ export default function App() {
   }, []);
 
 
-  // sembunyikan navbar saat scroll down, tampilkan saat scroll up
   useEffect(() => {
-
     let lastScrollY = window.scrollY;
-
     const handleScroll = () => {
-
-      if (window.scrollY < 10) {
-        setShowNavbar(true);
-        return;
-      }
-
-      if (window.scrollY > lastScrollY) {
-        setShowNavbar(false);
-      } else {
-        setShowNavbar(true);
-      }
-
+      setShowNavbar(window.scrollY < 10 || window.scrollY < lastScrollY);
       lastScrollY = window.scrollY;
     };
-
-
-    window.addEventListener(
-      "scroll",
-      handleScroll
-    );
-
-    return () => {
-
-      window.removeEventListener(
-        "scroll",
-        handleScroll
-      );
-    };
-
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   if (loading) {

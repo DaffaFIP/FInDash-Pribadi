@@ -85,10 +85,13 @@ app.post("/init-ai", async (req, res) => {
             transactions.length
         );
 
-        const { buildSystemPrompt } = await import('../src/prompts.js');
-
         userMemories.set(uid, [
-            { role: "system", content: buildSystemPrompt(transactions) }
+            { role: "system", content: `You are an AI financial analyst.\n\nHere is the user's transaction data:\n\n${transactions.map(t => {
+  let line = `- ${t.title} (${t.type || "expense"})`;
+  if (t.category) line += `\n  category: ${t.category}`;
+  line += `\n  amount: Rp${t.amount}\n  date: ${t.date}`;
+  return line;
+}).join("\n\n")}\n\nUse this data to answer all user questions.\n\nAnswer concisely, clearly, and professionally.` }
         ]);
 
         res.json({
