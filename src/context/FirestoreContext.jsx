@@ -7,6 +7,7 @@ import {
   where,
   getDocs,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   doc,
@@ -45,6 +46,12 @@ export function FirestoreProvider({ user, children }) {
     []
   );
 
+  const sortByDateDesc = (items) =>
+    [...items].sort((a, b) => {
+      const diff = (b.Date || 0) - (a.Date || 0);
+      return diff !== 0 ? diff : b.id.localeCompare(a.id);
+    });
+
   useEffect(() => {
     if (!user) return;
     const unsubs = [];
@@ -68,7 +75,7 @@ export function FirestoreProvider({ user, children }) {
               : d.data().Date,
           }));
           setter({
-            data,
+            data: name === "mastercategory" ? data : sortByDateDesc(data),
             loading: false,
             fromCache: snap.metadata.fromCache,
             error: null,
@@ -95,7 +102,7 @@ export function FirestoreProvider({ user, children }) {
               : d.data().Date,
           }));
           setter({
-            data,
+            data: name === "mastercategory" ? data : sortByDateDesc(data),
             loading: false,
             fromCache: snap.metadata.fromCache,
             error: null,
@@ -145,9 +152,8 @@ export function FirestoreProvider({ user, children }) {
         if (cancelled) break;
         updateQueueItem(item.id, { status: "syncing" });
         try {
-          const collRef = collection(db, item.collection);
           if (item.type === "add") {
-            await addDoc(collRef, {
+            await setDoc(doc(db, item.collection, item.docId), {
               ...item.data,
               uid: user.uid,
               Date: new Date(item.data.Date),
@@ -189,23 +195,23 @@ export function FirestoreProvider({ user, children }) {
           Date: new Date(data.Date),
         });
       } else {
-        const id = clientId();
+        const id = doc(collection(db, "expense")).id;
         addToQueue({
-          id,
+          id: clientId(),
           type: "add",
           collection: "expense",
           data,
-          docId: null,
+          docId: id,
           createdAt: Date.now(),
           status: "pending",
           retryCount: 0,
         });
         setExpenseState((prev) => ({
           ...prev,
-          data: [
+          data: sortByDateDesc([
             ...prev.data,
             { id, ...data, Date: new Date(data.Date), _pending: true },
-          ],
+          ]),
         }));
       }
       setPendingWrites(getPendingCount());
@@ -276,23 +282,23 @@ export function FirestoreProvider({ user, children }) {
           Date: new Date(data.Date),
         });
       } else {
-        const id = clientId();
+        const id = doc(collection(db, "income")).id;
         addToQueue({
-          id,
+          id: clientId(),
           type: "add",
           collection: "income",
           data,
-          docId: null,
+          docId: id,
           createdAt: Date.now(),
           status: "pending",
           retryCount: 0,
         });
         setIncomeState((prev) => ({
           ...prev,
-          data: [
+          data: sortByDateDesc([
             ...prev.data,
             { id, ...data, Date: new Date(data.Date), _pending: true },
-          ],
+          ]),
         }));
       }
       setPendingWrites(getPendingCount());
@@ -362,13 +368,13 @@ export function FirestoreProvider({ user, children }) {
           uid: user.uid,
         });
       } else {
-        const id = clientId();
+        const id = doc(collection(db, "mastercategory")).id;
         addToQueue({
-          id,
+          id: clientId(),
           type: "add",
           collection: "mastercategory",
           data: { ...data, uid: user.uid },
-          docId: null,
+          docId: id,
           createdAt: Date.now(),
           status: "pending",
           retryCount: 0,
