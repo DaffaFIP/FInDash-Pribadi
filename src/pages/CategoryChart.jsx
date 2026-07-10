@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 import {
   LineChart,
@@ -199,6 +199,14 @@ export default function CategoryChart() {
     return avgs;
   }, [allCategories, chartData]);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const currency = (value) => {
     const num = Number(value);
     if (num >= 1000) {
@@ -262,6 +270,7 @@ export default function CategoryChart() {
             </div>
 
             <div className="h-[260px] w-full sm:h-[350px] min-h-[260px]">
+              {mounted && (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={chartData}
@@ -292,6 +301,7 @@ export default function CategoryChart() {
                   ))}
                 </LineChart>
               </ResponsiveContainer>
+              )}
             </div>
 
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 pt-4">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 import {
   LineChart,
@@ -249,6 +249,14 @@ export default function FinanceChart() {
     return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
   }, [chartData]);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const currency = (value) => {
     return Number(value).toLocaleString("id-ID");
   };
@@ -333,6 +341,7 @@ export default function FinanceChart() {
         </div>
 
         <div className="w-full h-[260px] sm:h-[350px] min-h-[260px]">
+          {mounted && (
           <ResponsiveContainer
             width="100%"
             height="100%"
@@ -396,6 +405,7 @@ export default function FinanceChart() {
               />
             </LineChart>
           </ResponsiveContainer>
+          )}
         </div>
         </>
         )}

@@ -229,17 +229,15 @@ export default function Doughnut() {
 
           {/* DONUT CHART */}
           <div className="relative flex items-center justify-center w-[280px] h-[280px]">
-            <svg width={0} height={0}>
+            <PieChart width={280} height={280}>
               <defs>
                 {doughnutData.map((d, i) => (
-                  <linearGradient key={i} id={`grad-${i}`} x1="0" y1="0" x2="1" y2="1">
+                  <linearGradient key={i} id={`doughnut-grad-${i}`} x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0%" stopColor={pieColors[d.label] || "#64748B"} stopOpacity={0.85} />
                     <stop offset="100%" stopColor={pieColors[d.label] || "#64748B"} stopOpacity={1} />
                   </linearGradient>
                 ))}
               </defs>
-            </svg>
-            <PieChart width={280} height={280}>
               <Pie
                 data={doughnutData.map(d => ({ name: d.label, value: d.amount }))}
                 cx="50%"
@@ -252,7 +250,7 @@ export default function Doughnut() {
                 isAnimationActive={false}
               >
                 {doughnutData.map((entry, i) => (
-                  <Cell key={i} fill={`url(#grad-${i})`} />
+                  <Cell key={i} fill={`url(#doughnut-grad-${i})`} />
                 ))}
               </Pie>
               <Tooltip
@@ -272,7 +270,7 @@ export default function Doughnut() {
                 </p>
               </div>
             </div>
-            <div className="pointer-events-none absolute inset-0">
+            <div key={doughnutData.map(d => d.label + d.amount).join("|")} className="pointer-events-none absolute inset-0">
               {(() => {
                 const total = doughnutData.reduce((s, d) => s + d.amount, 0);
                 if (total === 0) return null;
@@ -299,7 +297,7 @@ export default function Doughnut() {
                         border: "1.5px solid white",
                       }}
                     >
-                      <i className={`fa-solid fa-${iconName} text-white`} style={{ fontSize: 11 }} />
+                      <i className={`fa-solid fa-${iconName} text-white`} style={{ fontSize: 11 }} aria-hidden="true" />
                     </div>
                   );
                 });
@@ -345,7 +343,7 @@ export default function Doughnut() {
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className={`h-6 w-6 shrink-0 rounded-md flex items-center justify-center ${categoryColors[item.label] || categoryColors["Lainnya"]}`}>
-                        {categoryIcons[item.label] ? <i className={`fa-solid fa-${categoryIcons[item.label]} text-xs`} /> : null}
+                        {categoryIcons[item.label] ? <i className={`fa-solid fa-${categoryIcons[item.label]} text-xs`} aria-hidden="true" /> : null}
                       </div>
                       <span className="truncate text-sm font-medium">{item.label}</span>
                     </div>
@@ -380,7 +378,7 @@ export default function Doughnut() {
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <div className={`h-6 w-6 shrink-0 rounded-md flex items-center justify-center ${categoryColors[item.label] || categoryColors["Lainnya"]}`}>
-                        {categoryIcons[item.label] ? <i className={`fa-solid fa-${categoryIcons[item.label]} text-xs`} /> : null}
+                        {categoryIcons[item.label] ? <i className={`fa-solid fa-${categoryIcons[item.label]} text-xs`} aria-hidden="true" /> : null}
                       </div>
                       <span className="truncate text-sm font-medium">{item.label}</span>
                     </div>
