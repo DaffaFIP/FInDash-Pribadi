@@ -61,8 +61,8 @@ export default function AddTransaction() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 p-6">
-      <div className="mx-auto max-w-xl rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 p-4 pb-24 sm:p-6 md:pb-6">
+      <div className="mx-auto max-w-xl rounded-2xl bg-white dark:bg-slate-800 p-5 sm:p-6 shadow">
 
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <h1 className="text-2xl font-bold dark:text-slate-100">
@@ -76,7 +76,7 @@ export default function AddTransaction() {
                 setType("expense");
                 setForm({ ...form, category: "" });
               }}
-              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition ${
+              className={`flex-1 rounded-md px-4 py-2.5 sm:py-2 text-sm font-medium transition ${
                 type === "expense"
                   ? "bg-red-500 text-white shadow-sm"
                   : "text-gray-600 dark:text-slate-300"
@@ -91,7 +91,7 @@ export default function AddTransaction() {
                 setType("income");
                 setForm({ ...form, category: "" });
               }}
-              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition ${
+              className={`flex-1 rounded-md px-4 py-2.5 sm:py-2 text-sm font-medium transition ${
                 type === "income"
                   ? "bg-green-500 text-white shadow-sm"
                   : "text-gray-600 dark:text-slate-300"
@@ -185,7 +185,7 @@ export default function AddTransaction() {
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-indigo-600 py-3 text-white hover:bg-indigo-700"
+            className="w-full rounded-xl bg-indigo-600 py-3.5 text-base font-medium text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition active:scale-[0.98] sm:py-3 sm:text-sm sm:font-normal sm:shadow-none"
           >
             Save
           </button>

@@ -3,6 +3,7 @@ import {
   Routes,
   Route,
   Link,
+  useLocation,
 } from 'react-router-dom'
 
 import Home from './pages/Home'
@@ -12,6 +13,7 @@ import AIChat from './pages/AIChat'
 import ProtectedRoute from "./pages/ProtectedRoute";
 import ErrorBoundary from "./pages/ErrorBoundary";
 import { FirestoreProvider, useFirestore } from "./context/FirestoreContext";
+import MobileBottomNav from './components/MobileBottomNav'
 
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -31,6 +33,40 @@ function StatusBanner() {
     );
   }
   return null;
+}
+
+function MobileHeader({ user }) {
+  const location = useLocation();
+
+  const titleMap = {
+    "/home": "Dashboard",
+    "/adddata": "Add Transaction",
+    "/ai": "AI Assistant",
+    "/login": "Profile",
+  };
+
+  const title = titleMap[location.pathname] || "FinanceApp";
+
+  return (
+    <header className="flex items-center justify-between border-b bg-white/80 dark:bg-slate-900/80 px-4 py-3 backdrop-blur md:hidden">
+      <Link to="/" className="text-lg font-bold text-indigo-600">
+        {title}
+      </Link>
+      {user && (
+        <Link
+          to="/login"
+          className="flex items-center gap-2"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+            {user.email?.charAt(0).toUpperCase()}
+          </span>
+          <span className="max-w-[120px] truncate text-sm text-slate-600 dark:text-slate-300">
+            {user.email}
+          </span>
+        </Link>
+      )}
+    </header>
+  );
 }
 
 export default function App() {
@@ -96,6 +132,7 @@ export default function App() {
 
       <nav
         className={`
+  hidden md:flex
   sticky top-0 z-50
   border-b
   bg-white/80 dark:bg-slate-900/80
@@ -148,9 +185,11 @@ export default function App() {
         </div>
       </nav>
 
+      <MobileHeader user={user} />
+
       <StatusBanner />
 
-      <main className="flex-1">
+      <main className="flex-1 pb-20 md:pb-0">
         <ErrorBoundary>
         <Routes>
 
@@ -198,13 +237,15 @@ export default function App() {
         </ErrorBoundary>
       </main>
 
-      <div className="border-t dark:border-slate-700 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+      <div className="hidden md:block border-t dark:border-slate-700 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
         <a
           href="https://daffafip.my.id"
         >
           © {new Date().getFullYear()} Daffa Faadihilah
         </a>
       </div>
+
+      <MobileBottomNav />
 
       </div>
       </FirestoreProvider>

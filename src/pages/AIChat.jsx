@@ -338,7 +338,7 @@ export default function AIChat({ user }) {
             .markdown strong { font-weight: 600; }
         `}</style>
 
-        <div className="mx-auto flex h-full max-w-4xl flex-col p-3 pb-[max(12px,env(safe-area-inset-bottom))] md:p-6">
+        <div className="mx-auto flex h-full max-w-4xl flex-col p-3 pb-[calc(max(12px,env(safe-area-inset-bottom))+5rem)] md:p-6 md:pb-6">
             <div className="mb-4 flex items-center justify-between">
                 <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100 md:text-2xl">
                     AI Financial Assistant

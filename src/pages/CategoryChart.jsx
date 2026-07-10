@@ -219,7 +219,7 @@ export default function CategoryChart() {
         </div>
       )}
 
-      <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
+      <div className="rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-6 shadow">
         <h2 className="mb-4 text-xl font-semibold dark:text-slate-100">
           Category Chart
         </h2>
@@ -231,7 +231,7 @@ export default function CategoryChart() {
               <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
               <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
             </div>
-            <div className="h-[350px] animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+            <div className="h-[260px] sm:h-[350px] animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex h-full items-center justify-center py-20 text-sm text-slate-400 dark:text-slate-500">
@@ -261,7 +261,7 @@ export default function CategoryChart() {
               </div>
             </div>
 
-            <div className="h-[350px] w-full min-h-[350px]">
+            <div className="h-[260px] w-full sm:h-[350px] min-h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={chartData}

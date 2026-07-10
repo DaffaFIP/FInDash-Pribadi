@@ -63,7 +63,7 @@ export default function Login() {
 
 
   return (
-      <div className="min-h-screen bg-slate-100 dark:bg-slate-900 p-6">
+      <div className="min-h-screen bg-slate-100 dark:bg-slate-900 p-3 pb-24 sm:p-6 md:pb-6">
       <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col lg:flex-row gap-6">
       <div className="w-full rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">

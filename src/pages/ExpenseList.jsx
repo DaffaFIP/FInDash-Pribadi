@@ -266,7 +266,68 @@ export default function ExpenseList({ user }) {
             </div>
             </div>
 
-          <div className="overflow-x-auto">
+          <div className="sm:hidden space-y-3">
+            {currentData.length > 0 ? (
+              currentData.map((item) => (
+                <div
+                  key={item.id}
+                  className={`rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 p-4 ${item._pending ? "opacity-60" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium dark:text-slate-100 truncate">
+                        {item.title}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                        {item.Date?.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+                      </p>
+                      {item.category && (
+                        <span className="mt-1.5 inline-block rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs text-slate-600 dark:text-slate-300">
+                          {item.category}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-semibold text-red-600 dark:text-red-400">
+                        -{currency(item.amount)}
+                      </p>
+                    </div>
+                  </div>
+                  {user && (
+                    <div className="mt-3 flex justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          setEditData({
+                            ...item,
+                            Date: item.Date?.toISOString().split("T")[0],
+                          });
+                          setIsEditOpen(true);
+                        }}
+                        className="rounded-lg bg-blue-500/10 p-2 text-blue-500 transition hover:bg-blue-500 hover:text-white"
+                      >
+                        <SquarePen size={18} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDeleteId(item.id);
+                          setIsDeleteOpen(true);
+                        }}
+                        className="rounded-lg bg-red-500/10 p-2 text-red-500 transition hover:bg-red-500 hover:text-white"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-600 p-8 text-center text-sm text-slate-400 dark:text-slate-500">
+                No data found.
+              </div>
+            )}
+          </div>
+
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full border-collapse border border-slate-200 dark:border-slate-700">
             <thead className="bg-slate-50 dark:bg-slate-700 border-b-2 border-slate-300 dark:border-slate-600">
               <tr>

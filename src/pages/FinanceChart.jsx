@@ -267,7 +267,7 @@ export default function FinanceChart() {
         </div>
       )}
 
-      <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
+        <div className="rounded-2xl bg-white dark:bg-slate-800 p-4 sm:p-6 shadow">
         <h2 className="mb-4 text-xl font-semibold dark:text-slate-100">
           Finance Chart
         </h2>
@@ -279,7 +279,7 @@ export default function FinanceChart() {
               <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
               <div className="h-9 w-20 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
             </div>
-            <div className="h-[350px] animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+            <div className="h-[260px] sm:h-[350px] animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
           </div>
         ) : (
         <>
@@ -332,7 +332,7 @@ export default function FinanceChart() {
           </div>
         </div>
 
-        <div className="w-full h-[350px] min-h-[350px]">
+        <div className="w-full h-[260px] sm:h-[350px] min-h-[260px]">
           <ResponsiveContainer
             width="100%"
             height="100%"

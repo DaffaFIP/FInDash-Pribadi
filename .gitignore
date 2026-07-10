@@ -37,3 +37,16 @@ docs/
 
 # md file
 AGENTS.md
+
+# Playwright MCP — screenshots & logs
+.playwright-mcp/
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Vite cache
+.vite/
+
+# Firebase cache (jika ada)
+.firebase/
