@@ -224,7 +224,6 @@ export default function Login() {
 
       {user && (
         <MasterCategory
-          user={user}
           onSuccess={(msg) => { setSuccessMsg(msg); setShowSuccess(true); }}
         />
       )}

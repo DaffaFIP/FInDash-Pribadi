@@ -15,19 +15,19 @@ export default function Home({ user }) {
 
 
         <div>
-          <Header user={user} />
+          <Header />
         </div>
 
         <div>
-          <FinanceChart user={user} />
+          <FinanceChart />
         </div>
 
         <div>
-          <CategoryChart user={user} />
+          <CategoryChart />
         </div>
 
         <div>
-          <Doughnut user={user} />
+          <Doughnut />
         </div>
 
         <div>

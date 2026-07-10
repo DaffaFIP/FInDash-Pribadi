@@ -1,25 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import EditModal from "./EditModal";
 import DeleteModal from "./DeleteModal";
 import SuccessModal from "./SuccessModal";
 import { Trash2, SquarePen } from "lucide-react";
-import {
-  collection,
-  onSnapshot,
-  deleteDoc,
-  doc,
-  query,
-  orderBy,
-  where,
-  updateDoc,
-} from "firebase/firestore";
-
-import { db } from "../firebase";
+import { useFirestore } from "../context/FirestoreContext";
 
 export default function ExpenseList({ user }) {
-  const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { expense, updateExpense, deleteExpense } = useFirestore();
+  const expenses = expense.data;
+  const loading = expense.loading;
+  const error = expense.error;
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -58,75 +48,30 @@ export default function ExpenseList({ user }) {
   const [successMessage, setSuccessMessage] =
     useState("");
 
-  // FETCH FIREBASE DATA
-  useEffect(() => {
-    const q = query(
-      collection(db, "expense"),
-      where("uid", "==", user.uid),
-      orderBy("Date", "desc")
-    );
-
-    const unsub = onSnapshot(q, (querySnapshot) => {
-      const data = querySnapshot.docs.map((doc) => {
-        const firebaseData = doc.data();
-
-        return {
-          id: doc.id,
-          ...firebaseData,
-          Date: firebaseData.Date?.toDate(),
-        };
-      });
-
-      setExpenses(data);
-      setLoading(false);
-    }, (error) => {
-      console.log(error);
-      setError("Failed to load data");
-      setLoading(false);
-    });
-
-    return () => unsub();
-  }, [user.uid]);
-
-
   // DELETE
   const confirmDelete = async () => {
     try {
-
-      await deleteDoc(
-        doc(db, "expense", deleteId)
-      );
-
+      await deleteExpense(deleteId);
       setIsDeleteOpen(false);
       setDeleteId(null);
       setSuccessMessage("Data deleted successfully");
       setIsSuccessOpen(true);
-
     } catch (error) {
       console.log(error);
     }
   };
 
-  //update
   const handleUpdate = async () => {
     try {
-      const docRef = doc(
-        db,
-        "expense",
-        editData.id
-      );
-
-      await updateDoc(docRef, {
+      await updateExpense(editData.id, {
         title: editData.title,
         category: editData.category,
         amount: Number(editData.amount),
         Date: new Date(editData.Date),
       });
-
       setIsEditOpen(false);
       setSuccessMessage("Data updated successfully");
       setIsSuccessOpen(true);
-
     } catch (error) {
       console.log(error);
     }
@@ -351,7 +296,7 @@ export default function ExpenseList({ user }) {
                 currentData.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className={`border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 ${item._pending ? "opacity-60" : ""}`}
                   >
                     <td className="p-3">
                       {item.title}

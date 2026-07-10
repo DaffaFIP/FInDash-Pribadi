@@ -1,41 +1,16 @@
-import { useState, useEffect } from "react";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  addDoc,
-  deleteDoc,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
+import { useState } from "react";
+import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "../firebase";
+import { useFirestore } from "../context/FirestoreContext";
 import DeleteModal from "./DeleteModal";
 import EditCategory from "./EditCategory";
 
-export default function MasterCategory({ user, onSuccess }) {
-  const [categories, setCategories] = useState([]);
-  const [catLoading, setCatLoading] = useState(true);
+export default function MasterCategory({ onSuccess }) {
+  const { mastercategory, addCategory, updateCategory } = useFirestore();
+  const categories = mastercategory.data;
+  const catLoading = mastercategory.loading;
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const q = query(
-      collection(db, "mastercategory"),
-      where("uid", "==", user.uid)
-    );
-
-    const unsub = onSnapshot(q, (snapshot) => {
-      const list = [];
-      snapshot.forEach((d) => list.push({ id: d.id, ...d.data() }));
-      setCategories(list);
-      setCatLoading(false);
-    });
-
-    return () => unsub();
-  }, [user]);
 
   const handleDeleteCat = (cat) => {
     setDeleteTarget(cat);
@@ -63,20 +38,16 @@ export default function MasterCategory({ user, onSuccess }) {
   const handleSaveCat = async () => {
     if (!editTarget || !editTarget.name.trim()) return;
     try {
+      const data = {
+        name: editTarget.name.trim(),
+        color: editTarget.color,
+        icon: editTarget.icon || "",
+      };
       if (editTarget.id) {
-        await updateDoc(doc(db, "mastercategory", editTarget.id), {
-          name: editTarget.name.trim(),
-          color: editTarget.color,
-          icon: editTarget.icon || "",
-        });
+        await updateCategory(editTarget.id, data);
         onSuccess?.("Category updated successfully");
       } else {
-        await addDoc(collection(db, "mastercategory"), {
-          name: editTarget.name.trim(),
-          color: editTarget.color,
-          icon: editTarget.icon || "",
-          uid: user.uid,
-        });
+        await addCategory(data);
         onSuccess?.("Category added successfully");
       }
       setEditTarget(null);

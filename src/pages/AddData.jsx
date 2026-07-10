@@ -1,17 +1,8 @@
-import { useState, useEffect } from "react";
-
-import {
-  collection,
-  addDoc,
-  query,
-  where,
-  onSnapshot,
-} from "firebase/firestore";
-
-import { db } from "../firebase";
+import { useState } from "react";
+import { useFirestore } from "../context/FirestoreContext";
 import SuccessModal from "./SuccessModal";
 
-export default function AddTransaction({ user }) {
+export default function AddTransaction() {
 
   const today = new Date()
     .toISOString()
@@ -43,55 +34,27 @@ export default function AddTransaction({ user }) {
     }
   };
 
-  // CATEGORIES FROM FIRESTORE
-  const [categories, setCategories] = useState([]);
-  const [catLoading, setCatLoading] = useState(true);
+  const { mastercategory, addExpense, addIncome } = useFirestore();
+  const categories = mastercategory.data;
+  const catLoading = mastercategory.loading;
   const [showSuccess, setShowSuccess] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const q = query(
-      collection(db, "mastercategory"),
-      where("uid", "==", user.uid)
-    );
-
-    const unsub = onSnapshot(q, (snapshot) => {
-      const list = [];
-      snapshot.forEach((d) => list.push({ id: d.id, ...d.data() }));
-      setCategories(list);
-      setCatLoading(false);
-    });
-
-    return () => unsub();
-  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const data = {
         title: form.title,
         amount: Number(form.amount),
-        uid: user.uid,
-        Date: new Date(form.Date),
+        Date: form.Date,
       };
-
       if (type === "expense") {
         data.category = form.category;
+        await addExpense(data);
+      } else {
+        await addIncome(data);
       }
-
-      await addDoc(collection(db, type), data);
-
       setShowSuccess(true);
-
-      setForm({
-        title: "",
-        category: "",
-        amount: "",
-        Date: today,
-      });
-
+      setForm({ title: "", category: "", amount: "", Date: today });
     } catch (error) {
       console.log(error);
     }

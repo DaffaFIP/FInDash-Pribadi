@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   LineChart,
@@ -12,72 +12,17 @@ import {
   ReferenceLine,
 } from "recharts";
 
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
+import { useFirestore } from "../context/FirestoreContext";
 
-import { db } from "../firebase";
-
-export default function FinanceChart({ user }) {
-  const [expenses, setExpenses] = useState([]);
-  const [incomes, setIncomes] = useState([]);
+export default function FinanceChart() {
+  const { expense, income } = useFirestore();
   const [filter, setFilter] = useState("30days");
   const [showExpense, setShowExpense] = useState(true);
   const [showIncome, setShowIncome] = useState(false);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let loaded = 0;
-    const checkDone = () => {
-      loaded++;
-      if (loaded === 2) setLoading(false);
-    };
-
-    const expenseQuery = query(
-      collection(db, "expense"),
-      where("uid", "==", user.uid)
-    );
-    const incomeQuery = query(
-      collection(db, "income"),
-      where("uid", "==", user.uid)
-    );
-
-    const unsubExpense = onSnapshot(expenseQuery, (snap) => {
-      const data = snap.docs.map((doc) => {
-        const d = doc.data();
-        return { id: doc.id, ...d, Date: d.Date?.toDate() };
-      });
-      setExpenses(data);
-      checkDone();
-    }, (error) => {
-      console.log(error);
-      setError("Failed to load data");
-      checkDone();
-    });
-
-    const unsubIncome = onSnapshot(incomeQuery, (snap) => {
-      const data = snap.docs.map((doc) => {
-        const d = doc.data();
-        return { id: doc.id, ...d, Date: d.Date?.toDate() };
-      });
-      setIncomes(data);
-      checkDone();
-    }, (error) => {
-      console.log(error);
-      setError("Failed to load data");
-      checkDone();
-    });
-
-    return () => {
-      unsubExpense();
-      unsubIncome();
-    };
-  }, [user.uid]);
+  const expenses = expense.data;
+  const incomes = income.data;
+  const loading = expense.loading || income.loading;
+  const error = expense.error || income.error;
 
   // FILTER
   const filteredExpenses = useMemo(() => {

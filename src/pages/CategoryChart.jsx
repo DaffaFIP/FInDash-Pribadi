@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   LineChart,
@@ -10,69 +10,16 @@ import {
   CartesianGrid,
 } from "recharts";
 
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
+import { useFirestore } from "../context/FirestoreContext";
 
-import { db } from "../firebase";
-
-export default function CategoryChart({ user }) {
-  const [expenses, setExpenses] = useState([]);
-  const [masterCategories, setMasterCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export default function CategoryChart() {
+  const { expense, mastercategory } = useFirestore();
+  const expenses = expense.data;
+  const masterCategories = mastercategory.data;
+  const loading = expense.loading || mastercategory.loading;
+  const error = expense.error;
   const [filter, setFilter] = useState("30days");
   const [hiddenCategories, setHiddenCategories] = useState({});
-
-  useEffect(() => {
-    let loaded = 0;
-    const checkDone = () => {
-      loaded++;
-      if (loaded === 2) setLoading(false);
-    };
-
-    const expenseQ = query(
-      collection(db, "expense"),
-      where("uid", "==", user.uid)
-    );
-    const catQ = query(
-      collection(db, "mastercategory"),
-      where("uid", "==", user.uid)
-    );
-
-    const unsubExpense = onSnapshot(expenseQ, (snap) => {
-      const data = snap.docs.map((doc) => {
-        const d = doc.data();
-        return { id: doc.id, ...d, Date: d.Date?.toDate() };
-      });
-      setExpenses(data);
-      checkDone();
-    }, (error) => {
-      console.log(error);
-      setError("Failed to load data");
-      checkDone();
-    });
-
-    const unsubCat = onSnapshot(catQ, (snap) => {
-      const data = snap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMasterCategories(data);
-      checkDone();
-    }, (error) => {
-      console.log(error);
-      checkDone();
-    });
-
-    return () => {
-      unsubExpense();
-      unsubCat();
-    };
-  }, [user.uid]);
 
   const categoryColorMap = useMemo(() => {
     const map = {};

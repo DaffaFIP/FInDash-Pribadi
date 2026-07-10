@@ -1,126 +1,51 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useFirestore } from "../context/FirestoreContext";
 
+export default function Header() {
+  const { expense } = useFirestore();
+  const loading = expense.loading;
+  const error = expense.error;
+  const expenses = expense.data;
 
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
+  const monthName = new Date().toLocaleDateString("en-US", { month: "long" });
 
-import { db } from "../firebase";
-
-export default function Header({ user }) {
-  const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-
-
-  // NAMA BULAN
-  const monthName = new Date().toLocaleDateString(
-    "en-US",
-    {
-      month: "long",
-    }
-  );
-
-  // FETCH FIREBASE DATA
-  useEffect(() => {
-    const q = query(
-      collection(db, "expense"),
-      where("uid", "==", user.uid)
-    );
-
-    const unsub = onSnapshot(q, (querySnapshot) => {
-      const data = querySnapshot.docs.map((doc) => {
-        const firebaseData = doc.data();
-
-        return {
-          id: doc.id,
-          ...firebaseData,
-          Date: firebaseData.Date?.toDate(),
-        };
-      });
-
-      setExpenses(data);
-      setLoading(false);
-    }, (error) => {
-      console.log(error);
-      setError("Failed to load data");
-      setLoading(false);
-    });
-
-    return () => unsub();
-  }, [user.uid]);
-
-  // FILTER BULAN INI
   const currentMonthExpenses = useMemo(() => {
-
     const now = new Date();
-
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-
     return expenses.filter((item) => {
-
       if (!item.Date) return false;
-
-      const itemDate = new Date(item.Date);
-
-      return (
-        itemDate.getMonth() === currentMonth &&
-        itemDate.getFullYear() === currentYear
-      );
+      const d = new Date(item.Date);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
-
   }, [expenses]);
 
-  // TOTAL BULAN INI
-  const totalExpense = useMemo(() => {
+  const totalExpense = useMemo(
+    () => currentMonthExpenses.reduce((sum, item) => sum + item.amount, 0),
+    [currentMonthExpenses]
+  );
 
-    return currentMonthExpenses.reduce(
-      (sum, item) =>
-        sum + item.amount,
-      0
-    );
-
-  }, [currentMonthExpenses]);
-
-
-  // CURRENCY
-  const currency = (value) => {
-    return Number(value).toLocaleString("id-ID");
-  };
+  const currency = (value) => Number(value).toLocaleString("id-ID");
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-
       {error && (
         <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 text-center text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
-
-      {/* HEADER */}
       <div className="rounded-2xl bg-white dark:bg-slate-800 p-6 shadow">
         <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
           Financial Dashboard
         </h1>
-
         {loading ? (
-          <div className="h-7 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+          <div className="mt-2 h-7 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
         ) : (
           <p className="mt-2 text-slate-500 dark:text-slate-400">
-
-            {monthName} Expenses :
-            {" "}
-            {currency(totalExpense)}
+            {monthName} Expenses : {currency(totalExpense)}
           </p>
         )}
-
       </div>
-
     </div>
   );
 }

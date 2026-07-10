@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useMemo, useState } from "react";
 
 import {
   PieChart,
@@ -11,21 +7,15 @@ import {
   Tooltip,
 } from "recharts";
 
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
+import { useFirestore } from "../context/FirestoreContext";
 
-import { db } from "../firebase";
+export default function Doughnut() {
 
-export default function Doughnut({ user }) {
-
-  const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [masterCats, setMasterCats] = useState([]);
+  const { expense, mastercategory } = useFirestore();
+  const expenses = expense.data;
+  const masterCats = mastercategory.data;
+  const loading = expense.loading || mastercategory.loading;
+  const error = expense.error;
   const [showAllMobile, setShowAllMobile] = useState(false);
 
   // FILTER DOUGHNUT CHART
@@ -33,48 +23,6 @@ export default function Doughnut({ user }) {
     doughnutFilter,
     setDoughnutFilter,
   ] = useState("30days");
-
-  // FETCH FIREBASE DATA
-  useEffect(() => {
-    const q = query(
-      collection(db, "expense"),
-      where("uid", "==", user.uid)
-    );
-
-    const unsub = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => {
-        const firebaseData = doc.data();
-        return {
-          id: doc.id,
-          ...firebaseData,
-          Date: firebaseData.Date?.toDate(),
-        };
-      });
-      setExpenses(data);
-      setLoading(false);
-    }, (error) => {
-      console.log(error);
-      setError("Failed to load data");
-      setLoading(false);
-    });
-
-    return () => unsub();
-  }, [user.uid]);
-
-  // FETCH MASTER CATEGORIES
-  useEffect(() => {
-    if (!user) return;
-    const q = query(
-      collection(db, "mastercategory"),
-      where("uid", "==", user.uid)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      const list = [];
-      snapshot.forEach((d) => list.push({ id: d.id, ...d.data() }));
-      setMasterCats(list);
-    });
-    return () => unsub();
-  }, [user]);
 
   // GENERIC FILTER FUNCTION
   const filterExpenses = (

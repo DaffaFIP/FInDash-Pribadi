@@ -11,17 +11,32 @@ import Login from './pages/Login'
 import AIChat from './pages/AIChat'
 import ProtectedRoute from "./pages/ProtectedRoute";
 import ErrorBoundary from "./pages/ErrorBoundary";
-import useOffline from "./hooks/useOffline";
+import { FirestoreProvider, useFirestore } from "./context/FirestoreContext";
 
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 
+function StatusBanner() {
+  const { isOnline, expense, income } = useFirestore();
+  const pending = (expense.data || []).filter((d) => d._pending).length +
+    (income.data || []).filter((d) => d._pending).length;
+
+  if (!isOnline) {
+    return (
+      <div className="bg-amber-400 px-4 py-2 text-center text-sm font-medium text-amber-900">
+        Offline — showing {expense.fromCache ? "cached" : "live"} data
+        {pending > 0 && ` (${pending} pending)`}
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNavbar, setShowNavbar] = useState(true);
-  const { offline, justReconnected } = useOffline();
 
   // check firebase auth state
   useEffect(() => {
@@ -76,6 +91,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <FirestoreProvider user={user}>
       <div className="flex min-h-screen flex-col">
 
       <nav
@@ -132,16 +148,7 @@ export default function App() {
         </div>
       </nav>
 
-      {offline && (
-        <div className="bg-amber-400 px-4 py-2 text-center text-sm font-medium text-amber-900">
-          You are offline — showing cached data
-        </div>
-      )}
-      {justReconnected && (
-        <div className="bg-green-500 px-4 py-2 text-center text-sm font-medium text-white">
-          Back online!
-        </div>
-      )}
+      <StatusBanner />
 
       <main className="flex-1">
         <ErrorBoundary>
@@ -151,7 +158,7 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute user={user}>
-              <AddData user={user} />
+              <AddData />
             </ProtectedRoute>
           }
         />
@@ -169,7 +176,7 @@ export default function App() {
           path="/adddata"
           element={
             <ProtectedRoute user={user}>
-              <AddData user={user} />
+              <AddData />
             </ProtectedRoute>
           }
         />
@@ -200,7 +207,7 @@ export default function App() {
       </div>
 
       </div>
-
+      </FirestoreProvider>
     </BrowserRouter>
   );
 }
