@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useId } from "react";
 
 import {
   PieChart,
@@ -17,6 +17,7 @@ export default function Doughnut() {
   const loading = expense.loading || mastercategory.loading;
   const error = expense.error;
   const [showAllMobile, setShowAllMobile] = useState(false);
+  const uid = useId();
 
   // FILTER DOUGHNUT CHART
   const [
@@ -232,7 +233,7 @@ export default function Doughnut() {
             <PieChart width={280} height={280}>
               <defs>
                 {doughnutData.map((d, i) => (
-                  <linearGradient key={i} id={`doughnut-grad-${i}`} x1="0" y1="0" x2="1" y2="1">
+                    <linearGradient key={i} id={`${uid}-doughnut-grad-${i}`} x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0%" stopColor={pieColors[d.label] || "#64748B"} stopOpacity={0.85} />
                     <stop offset="100%" stopColor={pieColors[d.label] || "#64748B"} stopOpacity={1} />
                   </linearGradient>
@@ -250,7 +251,7 @@ export default function Doughnut() {
                 isAnimationActive={false}
               >
                 {doughnutData.map((entry, i) => (
-                  <Cell key={i} fill={`url(#doughnut-grad-${i})`} />
+                    <Cell key={i} fill={`url(#${uid}-doughnut-grad-${i})`} />
                 ))}
               </Pie>
               <Tooltip

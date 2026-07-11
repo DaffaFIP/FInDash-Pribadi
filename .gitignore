@@ -38,8 +38,12 @@ docs/
 # md file
 AGENTS.md
 
-# Playwright MCP — screenshots & logs
-.playwright-mcp/
+# App screenshots
+*-adddata.png
+*-ai.png
+*-home*.png
+*-login.png
+*-overview.png
 
 # OS files
 Thumbs.db
@@ -50,3 +54,6 @@ Desktop.ini
 
 # Firebase cache (jika ada)
 .firebase/
+
+# Playwright MCP — screenshots & logs
+.playwright-mcp/
